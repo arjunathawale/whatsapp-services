@@ -1,0 +1,11 @@
+  /* App.css */
+  /* Style select options */
+  select option {
+      padding: 1rem;
+  }
+
+  /* Change color on hover */
+  select option:hover {
+      background-color: #f3f4f6;
+      /* Change the color on hover */
+  }

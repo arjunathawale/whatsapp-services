@@ -13,13 +13,14 @@
     font-family: "Montserrat", sans-serif;
 }
 
-* {
+/* * {
     scrollbar-width: thin;
     scrollbar-color: var(--secondary) var(--primary);
   }
-  
+   */
+
   /* Chrome, Edge, and Safari */
-  *::-webkit-scrollbar {
+  /* *::-webkit-scrollbar {
     width: 5px;
   }
   
@@ -34,4 +35,27 @@
     width: 5px;
     border: 1px solid var(--primary);
   }
+ */
 
+
+ .slick-slide>div {
+  margin: 0 10px;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0);
+}
+
+::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}

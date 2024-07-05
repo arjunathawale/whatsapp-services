@@ -22,10 +22,11 @@ const Login = () => {
             })
             if (res.status) {
                 toast.success(res.message)
+                console.log(res);
                 dispatch(setLogin(true))
                 dispatch(setUserData(res?.data))
                 dispatch(setRole(res?.data?.role))
-                dispatch(setAuthToken(res?.data?.AuthToken))
+                dispatch(setAuthToken(res?.AuthToken))
                 dispatch(setUserCrendentials(res?.data?.clinetConfig ? res?.data?.clinetConfig[0] : {}))
                 navigate("/")
             } else {

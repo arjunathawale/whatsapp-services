@@ -23,10 +23,12 @@ exports.checkAuth = (req, res, next) => {
 
 exports.checkToken = (req, res, next) => {
     let bearerHeader = req.headers['authorization'];
-    if (typeof bearerHeader !== 'undefined') {
+    // console.log("bearerHeader",bearerHeader,  req.headers.authorization);
+    if (bearerHeader) {
         const token = bearerHeader.split(' ')[1];
         jwt.verify(token, process.env.JWT_SECRET, (err, authData) => {
             if (err) {
+                console.log(err);
                 res.status(400).send({ status: false, message: "Invalid token" });
             }
             else {
@@ -78,6 +80,7 @@ const formidable = require('formidable');
 const fs = require('fs');
 const path = require('path');
 const { generateMetaMediaId } = require('./template');
+const { log } = require('async');
 
 exports.templateMedia = function (req, res) {
     const wpClientId = req.headers.wpclientid

@@ -27,7 +27,8 @@ const pricingPlanSchema = new mongoose.Schema({
         default: false
     },
     chatBotFeature: {
-        type: Number
+        type: Boolean,
+        default: false
     },
     planExpireIn: {
         type: Number

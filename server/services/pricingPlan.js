@@ -16,7 +16,7 @@ exports.get = async (req, res) => {
     if (manageTemplate) filterObject.manageTemplate = manageTemplate
     if (chatBotFeature) filterObject.chatBotFeature = chatBotFeature
     if (isActive) filterObject.isActive = isActive
-    if (isChatBotAllowed) filterObject.isChatBotAllowed = isChatBotAllowed
+    if (planExpireIn) filterObject.planExpireIn = planExpireIn
 
     if (id) filterObject._id = id
 

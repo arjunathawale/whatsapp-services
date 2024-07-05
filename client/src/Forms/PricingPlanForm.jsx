@@ -2,33 +2,47 @@ import React, { useState, useRef, useEffect } from 'react';
 import { FaArrowCircleDown, FaArrowDown, FaCheck, FaChevronDown, FaClosedCaptioning, FaCross, FaDoorClosed, FaWindowClose } from "react-icons/fa";
 import { FaFolderClosed } from 'react-icons/fa6';
 import { MdCancel } from 'react-icons/md';
+import { toast } from 'react-toastify';
+import { createAPI, updateAPI } from '../constants/constants';
 
 const PricingPlanForm = ({ drawerCondition, btnName, data }) => {
   function isEmptyObject(obj) {
     return Object.entries(obj).length === 0;
   }
+
   const [createOrUpdate, setCreateOrUpdate] = useState(isEmptyObject(data));
+  const routeUrl = createOrUpdate ? `/pricingPlan/create` : '/pricingPlan/update';
   const [loadingSpin, setLoadingSpin] = useState(false);
-  const [wpMobileNo, setWpMobileNo] = useState(data.mbl ? data?.mbl : '');
-  const [wpPhoneNoId, setWphoneNoId] = useState(data.phone ? data?.phone : '');
-  const [wpBussinessAccId, setWpBussinessAccId] = useState(data.buss ? data?.buss : '');
-  const [wpToken, setWpToken] = useState(data.token ? data?.token : '');
-  const [wpApiVersion, setWpApiVersion] = useState(data.api ? data?.api : '');
-  const [wpAppId, setWpAppId] = useState(data.app ? data?.app : '');
+  const [planName, setPlanName] = useState(data.planName ? data?.planName : '');
+  const [description, setDescription] = useState(data.description ? data?.description : '');
+
+
+  const [bulkLimit, setBulkLimit] = useState(data.bulkLimit ? data?.bulkLimit : '');
+  const [price, setPrice] = useState(data.planPrice ? data?.planPrice : '');
+  const [expireIn, setExpireIn] = useState(data.planExpireIn ? data?.planExpireIn : '');
   const [allRequirdFilled, setAllRequirdFilled] = useState(false);
 
-  const [isOpen, setIsOpen] = useState(false);
-  const [isChecked, setIsChecked] = useState(false);
+  const [isChecked, setIsChecked] = useState(data.isActive ? data?.isActive : true);
+  const [selectedPeriod, setSelectedPeriod] = useState(data.planPeriod ? data?.planPeriod : '');
+
+  const [messageSendAPI, setMessageSendAPI] = useState(data.messageSendAPI ? data?.messageSendAPI : false);
+  const [chatBot, setChatBot] = useState(data.chatBotFeature ? data?.chatBotFeature : false);
+  const [manageTemplate, setManageTemplate] = useState(data.manageTemplate ? data?.manageTemplate : false);
 
 
-  const toggleDropdown = () => {
-    setIsOpen(!isOpen);
+  const handleChange = (event) => {
+    console.log(event.target.value);
+    setSelectedPeriod(event.target.value);
   };
 
   const drawerRef = useRef(null);
   const toggleDrawer = () => {
     drawerCondition.setIsDrawerPricingOpen(false);
   };
+
+  const handleToggle = () => {
+    setIsChecked(!isChecked);
+  }
 
   const handleClickOutside = (event) => {
     if (drawerRef.current && !drawerRef.current.contains(event.target)) {
@@ -37,14 +51,87 @@ const PricingPlanForm = ({ drawerCondition, btnName, data }) => {
   };
 
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    setLoadingSpin(true);
     setAllRequirdFilled(true)
-    setTimeout(() => {
-      setLoadingSpin(false);
-      setAllRequirdFilled(false)
-    }, 5000);
+
+    if (!planName || !description || !bulkLimit || !price || !expireIn && (!messageSendAPI || !chatBot || !manageTemplate) && !selectedPeriod) {
+      toast.info("All Fields are required!")
+      setTimeout(() => {
+        setAllRequirdFilled(false)
+      }, 2000);
+    } else {
+      let objectData = {}
+      setLoadingSpin(true);
+      if (createOrUpdate) {
+        objectData = {
+          planName: planName,
+          planPeriod: selectedPeriod,
+          description: description,
+          bulkLimit: bulkLimit,
+          messageSendAPI: messageSendAPI,
+          manageTemplate: manageTemplate,
+          chatBotFeature: chatBot,
+          planExpireIn: expireIn,
+          isActive: isChecked,
+          planPrice: price
+        }
+
+        const res = await createAPI(routeUrl, {
+          ...objectData
+        })
+        if (res.status) {
+          toast.success(res.message)
+          drawerCondition.setIsDrawerPricingOpen(false);
+          // setName('');
+          // setPanNo('');
+          // setGstNo('');
+          // setAddress('');
+          // setEmail('');
+          // setMobileNo('');
+          // setIsChecked(false);
+          setLoadingSpin(false);
+        } else {
+          toast.error(res.message)
+          setLoadingSpin(false);
+
+        }
+      } else {
+        objectData = {
+          id: data?._id,
+          planName: planName,
+          planPeriod: selectedPeriod,
+          description: description,
+          bulkLimit: bulkLimit,
+          messageSendAPI: messageSendAPI,
+          manageTemplate: manageTemplate,
+          chatBotFeature: chatBot,
+          planExpireIn: expireIn,
+          isActive: isChecked,
+          planPrice: price
+        }
+
+        const res = await updateAPI(routeUrl, {
+          ...objectData
+        })
+        if (res.status) {
+          toast.success(res.message)
+          // setName('');
+          // setPanNo('');
+          // setGstNo('');
+          // setAddress('');
+          // setEmail('');
+          // setMobileNo('');
+          // setIsChecked(false);
+          setLoadingSpin(false);
+          // data = {}
+          drawerCondition.setIsDrawerPricingOpen(false);
+        } else {
+          toast.error(res.message)
+          setLoadingSpin(false);
+        }
+      }
+    }
   }
 
   useEffect(() => {
@@ -53,30 +140,6 @@ const PricingPlanForm = ({ drawerCondition, btnName, data }) => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
-
-
-  const handleToggle = () => {
-    setIsChecked(!isChecked);
-  };
-
-  const dropDownData = [
-    {
-      "id": 1,
-      "name": "v16.0"
-    },
-    {
-      "id": 2,
-      "name": "v17.0"
-    },
-    {
-      "id": 3,
-      "name": "v18.0"
-    },
-    {
-      "id": 4,
-      "name": "v19.0"
-    }
-  ]
 
   return (
     <div ref={drawerRef} className={`fixed inset-y-0 right-0 z-10 w-[600px] bg-white border-l border-gray-300 shadow-lg ${drawerCondition.isDrawerPricingOpen ? 'block' : 'hidden'}`}>
@@ -91,26 +154,26 @@ const PricingPlanForm = ({ drawerCondition, btnName, data }) => {
           <div className="flex justify-between gap-4">
             <div className='w-1/3'>
               <label htmlFor="input-label" className="block text-sm mb-1"><span className='text-sm text-red-500 font-medium'>* </span>Plan Name</label>
-              <input type="text" autoComplete='off' value={wpMobileNo} id="input-label" onChange={(e) => setWpMobileNo(e.target.value)} className={`py-2 px-4 block w-full rounded-lg text-sm border  mb-1 outline-none ${allRequirdFilled && wpMobileNo.length == 0 ? "border-red-500" : "border-gray-400"} `} placeholder="Plan Name" />
+              <input type="text" autoComplete='off' value={planName} id="input-label" onChange={(e) => setPlanName(e.target.value)} className={`py-2 px-4 block w-full rounded-lg text-sm border  mb-1 outline-none ${allRequirdFilled && planName.length == 0 ? "border-red-500" : "border-gray-400"} `} placeholder="Plan Name" />
             </div>
             <div className='w-2/3'>
               <label htmlFor="input-label" className="block text-sm  mb-1"><span className='text-sm text-red-500 font-medium'>* </span>Plan Description</label>
-              <input type="text" autoComplete='off' value={wpPhoneNoId} id="input-label" onChange={(e) => setWphoneNoId(e.target.value)} className={`py-2 px-4 block w-full rounded-lg text-sm border  mb-1 outline-none ${allRequirdFilled && wpPhoneNoId.length == 0 ? "border-red-500" : "border-gray-400"} `} placeholder="Plan Description" />
+              <input type="text" autoComplete='off' value={description} id="input-label" onChange={(e) => setDescription(e.target.value)} className={`py-2 px-4 block w-full rounded-lg text-sm border  mb-1 outline-none ${allRequirdFilled && description.length == 0 ? "border-red-500" : "border-gray-400"} `} placeholder="Plan Description" />
             </div>
           </div>
-    
+
           <div className="flex justify-between gap-4 mt-3">
             <div className='w-1/3'>
               <label htmlFor="input-label" className="block text-sm mb-1"><span className='text-sm text-red-500 font-medium'>* </span>Bulk Limit</label>
-              <input type="text" accept='number' autoComplete='off' value={wpMobileNo} id="input-label" onChange={(e) => setWpMobileNo(e.target.value)} className={`py-2 px-4 block w-full rounded-lg text-sm border  mb-1 outline-none ${allRequirdFilled && wpMobileNo.length == 0 ? "border-red-500" : "border-gray-400"} `} placeholder="Bulk Limit" />
+              <input type="text" accept='number' autoComplete='off' value={bulkLimit} id="input-label" onChange={(e) => setBulkLimit(e.target.value)} className={`py-2 px-4 block w-full rounded-lg text-sm border  mb-1 outline-none ${allRequirdFilled && bulkLimit.length == 0 ? "border-red-500" : "border-gray-400"} `} placeholder="Bulk Limit" />
             </div>
             <div className='w-1/3'>
-              <label htmlFor="input-label" className="block text-sm mb-1"><span className='text-sm text-red-500 font-medium'>* </span>Plan Amount</label>
-              <input type="text" autoComplete='off' value={wpMobileNo} id="input-label" onChange={(e) => setWpMobileNo(e.target.value)} className={`py-2 px-4 block w-full rounded-lg text-sm border  mb-1 outline-none ${allRequirdFilled && wpMobileNo.length == 0 ? "border-red-500" : "border-gray-400"} `} placeholder="Plan Amount" />
+              <label htmlFor="input-label" className="block text-sm mb-1"><span className='text-sm text-red-500 font-medium'>* </span>Plan Price</label>
+              <input type="text" autoComplete='off' value={price} id="input-label" onChange={(e) => setPrice(e.target.value)} className={`py-2 px-4 block w-full rounded-lg text-sm border  mb-1 outline-none ${allRequirdFilled && price.length == 0 ? "border-red-500" : "border-gray-400"} `} placeholder="Plan Price" />
             </div>
             <div className='w-1/3'>
               <label htmlFor="input-label" className="block text-sm  mb-1"><span className='text-sm text-red-500 font-medium'>* </span>Plan Expire In Days</label>
-              <input type="text" autoComplete='off' value={wpPhoneNoId} id="input-label" onChange={(e) => setWphoneNoId(e.target.value)} className={`py-2 px-4 block w-full rounded-lg text-sm border  mb-1 outline-none ${allRequirdFilled && wpPhoneNoId.length == 0 ? "border-red-500" : "border-gray-400"} `} placeholder="Plan Expire In Days" />
+              <input type="text" autoComplete='off' value={expireIn} id="input-label" onChange={(e) => setExpireIn(e.target.value)} className={`py-2 px-4 block w-full rounded-lg text-sm border  mb-1 outline-none ${allRequirdFilled && expireIn.length == 0 ? "border-red-500" : "border-gray-400"} `} placeholder="Plan Expire In Days" />
             </div>
           </div>
 
@@ -118,109 +181,61 @@ const PricingPlanForm = ({ drawerCondition, btnName, data }) => {
 
 
             <div class="flex">
-              <input type="checkbox" class="shrink-0 mt-0.5 border-gray-200 rounded text-blue-600 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none" id="hs-checkbox-group-4" checked="" />
+              <input type="checkbox" class="shrink-0 mt-0.5 border-gray-200 rounded text-blue-600 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none" id="hs-checkbox-group-1" checked={messageSendAPI} onChange={(e) => setMessageSendAPI(!messageSendAPI)} />
               <label for="hs-checkbox-group-4" class="text-sm text-gray-500 ms-3">Message Send API</label>
             </div>
 
             <div class="flex">
-              <input type="checkbox" class="shrink-0 mt-0.5 border-gray-200 rounded text-blue-600 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none" id="hs-checkbox-group-5" checked="" />
+              <input type="checkbox" class="shrink-0 mt-0.5 border-gray-200 rounded text-blue-600 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none" id="hs-checkbox-group-2" checked={chatBot} onChange={(e) => setChatBot(!chatBot)} />
               <label for="hs-checkbox-group-5" class="text-sm text-gray-500 ms-3">Chatbot Automation</label>
             </div>
 
             <div class="flex">
-              <input type="checkbox" class="shrink-0 mt-0.5 border-gray-200 rounded text-blue-600 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none" id="hs-checkbox-group-6" checked="" />
+              <input type="checkbox" class="shrink-0 mt-0.5 border-gray-200 rounded text-blue-600 focus:ring-blue-500 disabled:opacity-50 disabled:pointer-events-none" id="hs-checkbox-group-3" checked={manageTemplate} onChange={(e) => setManageTemplate(!manageTemplate)} />
               <label for="hs-checkbox-group-6" class="text-sm text-gray-500 ms-3">Manage Template</label>
             </div>
-
           </div>
 
 
           <label htmlFor="input-label" className="block text-sm  mt-5"><span className='text-sm text-red-500 font-medium'>* </span>Plan Period</label>
           <div className="justify-between px-2">
             <div className="flex">
-              <input type="radio" name="hs-radio-group" className="shrink-0 mt-0.5 border-gray-200 rounded-full text-blue-600 focus:ring-blue-500 cursor-pointer" id="hs-radio-group-1" />
+              <input type="radio" value={"MONTHLY"} checked={selectedPeriod === "MONTHLY"} onChange={handleChange} name="hs-radio-group" className="shrink-0 mt-0.5 border-gray-200 rounded-full text-blue-600 focus:ring-blue-500 cursor-pointer" id="hs-radio-group-1" />
               <label for="hs-radio-group-1" className="text-sm  text-gray-500 ms-2">Monthly</label>
             </div>
 
             <div className="flex">
-              <input type="radio" name="hs-radio-group" className="shrink-0 mt-0.5 border-gray-200 rounded-full text-blue-600 focus:ring-blue-500 cursor-pointer" id="hs-radio-group-2" />
+              <input type="radio" value={"QUATERLY"} checked={selectedPeriod === "QUATERLY"} onChange={handleChange} name="hs-radio-group" className="shrink-0 mt-0.5 border-gray-200 rounded-full text-blue-600 focus:ring-blue-500 cursor-pointer" id="hs-radio-group-2" />
               <label for="hs-radio-group-2" className="text-sm  text-gray-500 ms-2">Quaterly</label>
             </div>
 
             <div className="flex">
-              <input type="radio" name="hs-radio-group" className="shrink-0 mt-0.5 border-gray-200 rounded-full text-blue-600 focus:ring-blue-500 cursor-pointer" id="hs-radio-group-3" />
+              <input type="radio" value={"YEARLY"} checked={selectedPeriod === "YEARLY"} onChange={handleChange} name="hs-radio-group" className="shrink-0 mt-0.5 border-gray-200 rounded-full text-blue-600 focus:ring-blue-500 cursor-pointer" id="hs-radio-group-3" />
               <label for="hs-radio-group-3" className="text-sm  text-gray-500 ms-2">Yearly</label>
             </div>
           </div>
 
-{/* 
-         
-          <input type="text" value={wpBussinessAccId} id="input-label" onChange={(e) => setWpBussinessAccId(e.target.value)} className={`py-2 px-4 block w-full rounded-lg text-sm border  mb-1 outline-none ${allRequirdFilled && wpBussinessAccId.length == 0 ? "border-red-500" : "border-gray-400"} `} placeholder="106503405738287" />
 
-
-
-
-
-          <label htmlFor="input-label" className="block text-sm  mb-1"><span className='text-sm text-red-500 font-medium'>* </span>App ID</label>
-          <input type="text" value={wpAppId} id="input-label" onChange={(e) => setWpAppId(e.target.value)} className={`py-2 px-4 block w-full rounded-lg text-sm border  mb-1 outline-none ${allRequirdFilled && wpAppId.length == 0 ? "border-red-500" : "border-gray-400"} `} placeholder="581563910221967" />
-
-
-
-          <label htmlFor="input-label" className="block text-sm  mb-1"><span className='text-sm text-red-500 font-medium'>* </span>API Version</label>
-
-          <div className="relative inline-block text-left w-full">
-            <div>
-              <button
-                type="button"
-                className={`inline-flex w-full justify-between items-center rounded-md border ${allRequirdFilled && wpApiVersion.length == 0 ? "border-red-500 " : "border-gray-400 "}shadow-sm px-4 py-2 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50`}
-                id="options-menu"
-                aria-haspopup="true"
-                aria-expanded="true"
-                onClick={toggleDropdown}
-              >
-                {wpApiVersion.length > 0 ? wpApiVersion : "Select API Version"}
-                {wpApiVersion.length > 0 ? <div className='flex gap-1'>
-                  <MdCancel className='text-red-400 text-m' onClick={() => {
-                    setWpApiVersion("")
-                    setIsOpen(true)
-                  }} />
-                  <FaCheck className='text-green-400 text-m' />
-                </div> : <FaChevronDown />}
-
-
-              </button>
-            </div>
-
-            {isOpen && (
-              <div
-                className="origin-top-right absolute mt-2 w-[90%] left-4 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none"
-                role="menu"
-                aria-orientation="vertical"
-                aria-labelledby="options-menu"
-              >
-                <div className="py-1 duration-200" role="none">
-
-                  {
-                    dropDownData.map(item => (
-                      <h6
-                        key={item.id}
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
-                        onClick={() => {
-                          setWpApiVersion(item.name)
-                          setIsOpen(false)
-                        }}
-                      >{item.name}
-                      </h6>
-
-                    ))
-                  }
-                </div>
-              </div>
-            )}
+          <label for="input-label" className="block text-sm  mb-1 mt-2">Plan Status</label>
+          <div className='mt-0'>
+            <input
+              type="checkbox"
+              id="toggle"
+              checked={isChecked}
+              onChange={handleToggle}
+              className="hidden"
+            />
+            <label
+              htmlFor="toggle"
+              className={`flex items-center cursor-pointer w-12 h-6 rounded-full p-1 transition-colors duration-300 ${isChecked ? 'bg-blue-500' : 'bg-gray-400'
+                }`}
+            >
+              <span
+                className={`inline-block w-5 h-5 rounded-full bg-white shadow-md transform transition-transform duration-300 ${isChecked ? 'translate-x-6' : 'translate-x-0'
+                  }`}
+              />
+            </label>
           </div>
-
-          <label htmlFor="input-label" className="block text-sm  mb-1"><span className='text-sm text-red-500 font-medium'>* </span>Permanant Access Token</label>
-          <textarea value={wpToken} className={`py-2 px-4 block w-full rounded-lg text-sm border  mb-1 outline-none ${allRequirdFilled && wpToken.length == 0 ? "border-red-500" : "border-gray-400"} `} onCa rows="5" onChange={(e) => setWpToken(e.target.value)} placeholder="Paste or Enter token"></textarea> */}
 
 
         </div>

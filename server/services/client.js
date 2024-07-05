@@ -197,9 +197,9 @@ exports.clientLogin = async (req, res) => {
                     } else {
 
                         const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: "365d" });
-                        user['AuthToken'] = token;
+                        // user['AuthToken'] = token;
                         const loginObject = user;
-                        res.status(200).send({ status: true, message: "Login Successfully", data: loginObject });
+                        res.status(200).send({ status: true, message: "Login Successfully", data: loginObject, AuthToken: token });
                     }
                 }
 
@@ -211,9 +211,9 @@ exports.clientLogin = async (req, res) => {
                     const token = jwt.sign({ clientId: client._id }, process.env.JWT_SECRET, { expiresIn: "365d" });
                     const loginObject = {
                         ...client[0],
-                        AuthToken: token
+                        // AuthToken: token
                     }
-                    res.status(200).send({ status: true, message: "Login Successfully", data: loginObject });
+                    res.status(200).send({ status: true, message: "Login Successfully", data: loginObject, AuthToken: token });
                 }
             }
         }

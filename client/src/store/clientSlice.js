@@ -12,7 +12,7 @@ const initialState = {
     userData: userData,
     userCrendentials: userCrendentials,
     role: role,
-    authToken : authToken
+    authToken: authToken
 }
 
 const clientSlice = createSlice({
@@ -42,5 +42,5 @@ const clientSlice = createSlice({
     }
 })
 
-export const { setLogin, setUserData, setRole, setUserCrendentials,setAuthToken } = clientSlice.actions;
+export const { setLogin, setUserData, setRole, setUserCrendentials, setAuthToken } = clientSlice.actions;
 export default clientSlice.reducer;

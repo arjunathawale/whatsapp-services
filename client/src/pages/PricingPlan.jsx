@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import Header from '../components/Header'
 import { FaTrashArrowUp } from 'react-icons/fa6'
 import { useState } from 'react'
@@ -6,6 +6,9 @@ import DatepickerComponent from '../components/DatepickerComponent'
 import ClientForm from '../Forms/ClientForm'
 import { FaEdit } from 'react-icons/fa'
 import PricingPlanForm from '../Forms/PricingPlanForm'
+import { getAPI } from '../constants/constants'
+import { toast } from 'react-toastify'
+import { MdCheck, MdClose, MdEdit } from 'react-icons/md'
 
 const PricingPlan = () => {
     const [filter, setFilter] = useState(false)
@@ -37,14 +40,33 @@ const PricingPlan = () => {
         setIsOpen(false);
     };
     // const data = []
-    const data = [1, 2, 3]
+    // const data = [1, 2, 3]
+
+    const [data, setData] = useState([]);
+
+    useEffect(() => {
+        fetchData()
+    }, [isDrawerPricingOpen])
+    const fetchData = async () => {
+        // let filterObject = {}
+        setIsLoading(true)
+        let res = await getAPI("/pricingPlan/get", {})
+        if (res.status) {
+            setData(res.data)
+            setIsLoading(false)
+        } else {
+            toast.error("Something went wrong")
+            setIsLoading(false)
+        }
+    }
+
     return (
         <div className='p-1'>
             <Header name="Pricing Plans" />
             {/* Add Btn, filter btn search box */}
             <div className="w-full h-2/4 mt-5 p-1 ">
                 <div className='flex justify-between py-2'>
-                    <input type="text" id="input-email-label" className="py-1 h-10 px-4 block w-1/4  rounded-lg text-sm focus:outline-none bg-slate-200 justify-center items-center" placeholder="Search here" />
+                    <input type="text" id="input-email-label" autoComplete='off' className="py-1 h-10 px-4 block w-1/4  rounded-lg text-sm focus:outline-none bg-slate-200 justify-center items-center" placeholder="Search here" />
                     <div className='flex justify-end'>
                         {/* <button type="button" onClick={() => setFilter(prev => !prev)} className="h-10 mx-1 py-1 px-4 flex justify-center items-center size-[45px] text-s font-regular rounded-lg border border-transparent bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:pointer-events-none dark:focus:outline-none dark:focus:ring-1 dark:focus:ring-gray-600">
                             <FaFilter />
@@ -76,79 +98,75 @@ const PricingPlan = () => {
                         <>
                             <div className="grid grid-cols-3 gap-4 overflow-auto">
                                 {
-                                    data.map(item => (
+                                    data.map((item, index) => (
 
-                                        <div class="flex flex-col p-6 mx-auto max-w-lg text-center text-gray-900 bg-white rounded-lg border border-gray-100 shadow xl:p-8">
-                                            <h3 class="mb-4 text-2xl font-semibold">Starter</h3>
-                                            <p class="font-light text-gray-500 sm:text-lg dark:text-gray-400">Best option for personal use & for your next project.</p>
-                                            <div class="flex justify-center items-baseline my-8">
-                                                <span class="mr-2 text-5xl font-extrabold">$29</span>
+                                        <div key={index} class="flex flex-col p-6 mx-auto max-w-lg text-center text-gray-900 bg-white rounded-lg border border-gray-100 shadow xl:p-8">
+                                            <div className='flex justify-end' onClick={() => {
+                                                setIsDrawerPricingOpen(true)
+                                                setSelectedData(item)
+                                            }}>
+                                                <MdEdit className='text-blue-500 text-xl cursor-pointer' />
+                                            </div>
+                                            <h3 class="mb-2 text-2xl font-semibold">{item?.planName}</h3>
+                                            <p class="font-light text-gray-500 sm:text-lg dark:text-gray-400">{item?.description}</p>
+                                            <div class="flex justify-center items-baseline my-2">
+                                                <span class="mr-2 text-3xl font-extrabold">₹{item?.planPrice}</span>
                                                 <span class="text-gray-500 dark:text-gray-400">/month</span>
                                             </div>
 
                                             <ul role="list" class="mb-8 space-y-4 text-left">
+                                                <div class="flex justify-center items-baseline my-2">
+                                                    <span class="mr-2 text-1xl font-medium">{item?.bulkLimit}</span>
+                                                    <span class="text-gray-500 dark:text-gray-400">Bulk Send Limit</span>
+                                                </div>
+
                                                 <li class="flex items-center space-x-3">
 
-                                                    <svg class="flex-shrink-0 w-5 h-5 text-green-500 dark:text-green-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
-                                                    <span>Individual configuration</span>
+                                                    <MdCheck className='text-green-400 text-xl' />
+                                                    <span>Team size: 1 Agent</span>
                                                 </li>
                                                 <li class="flex items-center space-x-3">
 
-                                                    <svg class="flex-shrink-0 w-5 h-5 text-green-500 dark:text-green-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                                                    {
+                                                        item?.messageSendAPI ? <MdCheck className='text-green-400 text-xl' /> : <MdClose className='text-red-500 text-xl' />
+                                                    }
+
+                                                    <span>Message Send RestAPI </span>
+                                                </li>
+                                                <li class="flex items-center space-x-3">
+                                                    {
+                                                        item?.chatBotFeature ? <MdCheck className='text-green-400 text-xl' /> : <MdClose className='text-red-500 text-xl' />
+                                                    }
+
+                                                    <span>Chatbot Automation</span>
+                                                </li>
+                                                <li class="flex items-center space-x-3">
+                                                    {
+                                                        item?.manageTemplate ? <MdCheck className='text-green-400 text-xl' /> : <MdClose className='text-red-500 text-xl' />
+                                                    }
+
+                                                    <span>Manage Template</span>
+                                                </li>
+                                                <li class="flex items-center space-x-3">
+
+                                                    <MdCheck className='text-green-400 text-xl' />
                                                     <span>No setup, or hidden fees</span>
                                                 </li>
-                                                <li class="flex items-center space-x-3">
-
-                                                    <svg class="flex-shrink-0 w-5 h-5 text-green-500 dark:text-green-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
-                                                    <span>Team size: <span class="font-semibold">1 developer</span></span>
-                                                </li>
-                                                <li class="flex items-center space-x-3">
-
-                                                    <svg class="flex-shrink-0 w-5 h-5 text-green-500 dark:text-green-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
-                                                    <span>Premium support: <span class="font-semibold">6 months</span></span>
-                                                </li>
-                                                <li class="flex items-center space-x-3">
-
-                                                    <svg class="flex-shrink-0 w-5 h-5 text-green-500 dark:text-green-400" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
-                                                    <span>Free updates: <span class="font-semibold">6 months</span></span>
-                                                </li>
                                             </ul>
-                                            <a href="#" class="text-blue-500 bg-primary-600 hover:bg-gray-700 focus:ring-4 focus:ring-primary-200 font-medium rounded-lg text-sm px-5 py-2.5 text-center">Get started</a>
+                                            {/* <a href="#" class="text-blue-500 bg-primary-600 hover:bg-gray-700 focus:ring-4 focus:ring-primary-200 font-medium rounded-lg text-sm px-5 py-2.5 text-center">Get started</a> */}
                                         </div>
-
-                                        // <div className="flex flex-col bg-white border shadow-m rounded-xl p-4 md:p-5" key={item}>
-                                        //     <div className='flex justify-between'>
-                                        //         <h3 className="text-lg font-bold text-gray-800">
-                                        //             Arjun Athawale
-                                        //         </h3>
-                                        //         <div className="flex gap-2 items-center">
-                                        //             <FaTrashArrowUp onClick={() => setIsOpen(true)} className='text-xl text-red-500 cursor-pointer' />
-                                        //             <FaEdit className='text-xl text-green-500 cursor-pointer' onClick={() => {
-                                        //                 setIsDrawerPricingOpen(true)
-                                        //                 setSelectedData({})
-                                        //             }} />
-                                        //         </div>
-                                        //     </div>
-                                        //     <p className="mt-0 text-sm font-medium text-gray-500 dark:text-neutral-500">
-                                        //         arjunathawale08@gmail.com
-                                        //     </p>
-                                        //     <p className=" text-sm text-gray-500 dark:text-neutral-60">
-                                        //         9876543210
-                                        //     </p>
-                                        //     <p className=" text-sm uppercase text-gray-500 dark:text-neutral-60">
-                                        //         CREPA0413L
-                                        //     </p>
-                                        //     <p className=" text-sm uppercase text-gray-500 dark:text-neutral-60">
-                                        //         CREPA0413LSSDfsasdRD
-                                        //     </p>
-                                        //     <p className=" text-sm text-gray-500 dark:text-neutral-60">
-                                        //         New York No. 1 Lake Park
-                                        //     </p>
-                                        // </div>
                                     ))
                                 }
                             </div>
-                        </> : isLoading ? <span className="animate-spin inline-block size-6 border-[2px] border-current border-t-transparent text-blue text-center rounded-full" aria-label="loading"></span> :
+                        </> : isLoading ? <div className="min-h-60 flex flex-col rounded-xl">
+                            <div className="flex flex-auto flex-col justify-center items-center p-4 md:p-5">
+                                <div className="flex justify-center">
+                                    <div className="animate-spin inline-block size-6 border-[3px] border-current border-t-transparent text-blue-600 rounded-full dark:text-blue-500" role="status" aria-label="loading">
+                                        <span className="sr-only">Loading...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div> :
                             <h3 className='text-2xl text-center font-medium mt-1'>No Data Found</h3>
 
                 }

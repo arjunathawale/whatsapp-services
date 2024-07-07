@@ -1,7 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { FaArrowCircleDown, FaArrowDown, FaCheck, FaChevronDown, FaChevronLeft, FaChevronRight, FaClosedCaptioning, FaCross, FaDoorClosed, FaWindowClose } from "react-icons/fa";
-import { FaFolderClosed } from 'react-icons/fa6';
-import { MdCancel } from 'react-icons/md';
+import { FaWindowClose } from "react-icons/fa";
 import Pagination from '../components/Pagination';
 import { toast } from 'react-toastify';
 import { getAPI } from '../constants/constants';
@@ -16,10 +14,6 @@ const BulkSenderDetailReport = ({ drawerCondition, bulkMasterId }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [data, setData] = useState([]);
 
-  const toggleDropdown = () => {
-    setIsOpen(!isOpen);
-  };
-
   const drawerRef = useRef(null);
   const toggleDrawer = () => {
     drawerCondition.setIsReportOpen(false);
@@ -32,14 +26,7 @@ const BulkSenderDetailReport = ({ drawerCondition, bulkMasterId }) => {
   };
 
 
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    setLoadingSpin(true);
 
-    setTimeout(() => {
-      setLoadingSpin(false);
-    }, 5000);
-  }
 
   useEffect(() => {
     document.addEventListener('mousedown', handleClickOutside);
@@ -118,7 +105,7 @@ const BulkSenderDetailReport = ({ drawerCondition, bulkMasterId }) => {
                         data.length > 0 ? data.map((item, index) => {
                           return (
                             <tr key={index} className='border border-gray-200'>
-                              <td className="px-4 py-2 whitespace-nowrap text-xs text-gray-800 font-medium border border-gray-200">{item?.mobileNumber}</td>
+                              <td className="px-4 py-3 whitespace-nowrap text-xs text-gray-800 font-medium border border-gray-200">{item?.mobileNumber}</td>
                               <td className="px-4 py-2 whitespace-nowrap text-xs text-gray-800 font-medium border border-gray-200">{item?.createdAt && moment(item?.createdAt).format("DD-MMM-YYYY hh:mm:ss A")}</td>
                               <td className="px-4 py-2 whitespace-nowrap text-xs text-gray-800 font-medium border border-gray-200">{item?.sentDateTime && moment(item?.sentDateTime).format("DD-MMM-YYYY hh:mm:ss A")}</td>
                               <td className="px-4 py-2 whitespace-nowrap text-xs text-gray-800 font-medium border border-gray-200">{item?.deliveredDateTime && moment(item?.deliveredDateTime).format("DD-MMM-YYYY hh:mm:ss A")}</td>
@@ -136,13 +123,16 @@ const BulkSenderDetailReport = ({ drawerCondition, bulkMasterId }) => {
             </div>
           </div>
         </div>
+        <div className='-mt-1'>
+
         <Pagination
           currentPage={currentPage}
           pageSize={pageSize}
           totalPages={Math.ceil(dataCount / pageSize)}
           onPageChange={onPageChange}
           setPageSize={setPageSize}
-        />
+          />
+          </div>
       </div>
     </div >
   );

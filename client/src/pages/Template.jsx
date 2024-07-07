@@ -258,7 +258,7 @@ const Template = () => {
                                     data.map(item => (
                                         <div className="flex flex-col bg-white border  shadow-m rounded-xl p-4 md:p-5" key={item._id} >
                                             <div className='flex justify-between'>
-                                                <h3 className="text-lg font-bold cursor-pointer text-gray-800" onClick={() => {
+                                                <h3 className="text-lg font-bold cursor-pointer text-gray-800 break-all" onClick={() => {
                                                     setTemplateData(item)
                                                     setIsModelOpen(true)
                                                 }}>

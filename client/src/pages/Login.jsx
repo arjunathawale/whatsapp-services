@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { loginAPI } from '../constants/constants'
 import { toast } from 'react-toastify'
 import { useNavigate } from 'react-router-dom'
-import { setLogin, setUserData, setRole, setUserCrendentials, setAuthToken } from '../store/clientSlice'
+import { setLogin, setUserData, setRole, setUserCrendentials, setAuthToken, setPlanData } from '../store/clientSlice'
 import { useDispatch } from 'react-redux'
 
 const Login = () => {
@@ -28,6 +28,7 @@ const Login = () => {
                 dispatch(setRole(res?.data?.role))
                 dispatch(setAuthToken(res?.AuthToken))
                 dispatch(setUserCrendentials(res?.data?.clinetConfig ? res?.data?.clinetConfig[0] : {}))
+                dispatch(setPlanData(res.planData ? res.planData : {}))
                 navigate("/")
             } else {
                 toast.error(res.message)

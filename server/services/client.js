@@ -1,6 +1,7 @@
 
 const Client = require('../models/client');
 const User = require('../models/user');
+const plans = require('../models/purchaseClientPlans');
 const jwt = require('jsonwebtoken');
 const mm = require("../services/global")
 const moment = require("moment");
@@ -159,6 +160,7 @@ exports.delete = async (req, res) => {
 }
 
 exports.clientLogin = async (req, res) => {
+
     const { username, password } = req.body
     try {
         if (!username || !password) {
@@ -199,7 +201,7 @@ exports.clientLogin = async (req, res) => {
                         const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: "365d" });
                         // user['AuthToken'] = token;
                         const loginObject = user;
-                        res.status(200).send({ status: true, message: "Login Successfully", data: loginObject, AuthToken: token });
+                        res.status(200).send({ status: true, message: "Login Successfully", data: user, AuthToken: token });
                     }
                 }
 
@@ -208,16 +210,46 @@ exports.clientLogin = async (req, res) => {
                 if (!passwordMatch) {
                     res.status(400).send({ status: false, message: "Incorrect Password" });
                 } else {
-                    const token = jwt.sign({ clientId: client._id }, process.env.JWT_SECRET, { expiresIn: "365d" });
-                    const loginObject = {
-                        ...client[0],
-                        // AuthToken: token
+                    const token = jwt.sign({ clientId: client[0]._id }, process.env.JWT_SECRET, { expiresIn: "365d" });
+                    const data = await plans.aggregate([
+                        {
+                            $match: {
+                                wpClientId: new mongoose.Types.ObjectId(client[0]._id),
+                                isActive: true
+                            }
+                        },
+                        {
+                            $lookup: {
+                                from: "pricingplans",
+                                localField: "planId",
+                                foreignField: "_id",
+                                as: "planInfo"
+                            }
+                        },
+                        {
+                            $unwind: {
+                                path: "$planInfo",
+                            }
+                        }
+                    ]);
+                    const planData = {
+                        startDatetime: data[0]?.startDatetime,
+                        expireDatetime: data[0]?.expireDatetime,
+                        bulkLimit: data[0]?.planInfo?.bulkLimit,
+                        chatBotFeature: data[0]?.planInfo?.chatBotFeature,
+                        description: data[0]?.planInfo?.description,
+                        manageTemplate: data[0]?.planInfo?.manageTemplate,
+                        messageSendAPI: data[0]?.planInfo?.messageSendAPI,
+                        planName: data[0]?.planInfo?.planName,
+                        planPrice: data[0]?.planInfo?.planPrice,
+                        isActive: data[0]?.isActive
                     }
-                    res.status(200).send({ status: true, message: "Login Successfully", data: loginObject, AuthToken: token });
+                    res.status(200).send({ status: true, message: "Login Successfully", data: client[0], AuthToken: token, planData: planData });
                 }
             }
         }
     } catch (err) {
+        console.log(err);
         res.status(400).send({ status: false, message: "Failed to Login", error: err });
     }
 
@@ -320,3 +352,5 @@ exports.updatePassword = async (req, res) => {
         }
     }
 }
+
+

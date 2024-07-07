@@ -5,6 +5,7 @@ const userData = JSON.parse(localStorage.getItem("userData")) || {}
 const role = localStorage.getItem("role") || ""
 const authToken = localStorage.getItem("authToken") || ""
 const userCrendentials = JSON.parse(localStorage.getItem("userCrendentials")) || {}
+const activePlanData = JSON.parse(localStorage.getItem("activePlanData")) || {}
 
 
 const initialState = {
@@ -12,7 +13,8 @@ const initialState = {
     userData: userData,
     userCrendentials: userCrendentials,
     role: role,
-    authToken: authToken
+    authToken: authToken,
+    activePlanData: activePlanData,
 }
 
 const clientSlice = createSlice({
@@ -38,9 +40,13 @@ const clientSlice = createSlice({
         setUserCrendentials: (state, action) => {
             state.userCrendentials = action.payload
             localStorage.setItem("userCrendentials", JSON.stringify(action.payload))
+        },
+        setPlanData: (state, action) => {
+            state.activePlanData = action.payload
+            localStorage.setItem("activePlanData", JSON.stringify(action.payload))
         }
     }
 })
 
-export const { setLogin, setUserData, setRole, setUserCrendentials, setAuthToken } = clientSlice.actions;
+export const { setLogin, setUserData, setRole, setUserCrendentials, setAuthToken, setPlanData } = clientSlice.actions;
 export default clientSlice.reducer;

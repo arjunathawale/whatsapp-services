@@ -15,20 +15,22 @@ import { FiUser } from "react-icons/fi";
 const Sidebar = ({ sideBar }) => {
     const [subMenuOpen, setSubMenuOpen] = useState(false)
     const navigate = useNavigate()
-    const { role } = useSelector((state) => state.user)
-    const Menus = role === "ADMIN" ? [
+    const { role, activePlanData } = useSelector((state) => state.user)
+    const adminData = [
         { title: "Dashboard", link: "/", icon: <LuLayoutDashboard /> },
         { title: "Clients", link: "/clients", icon: <FiUser /> },
         { title: "Plan", link: "/plans", spacing: false, icon:<GiTakeMyMoney/> },
         { title: "Logout", link: "/logout", spacing: true, icon: <LuLogOut /> },
-    ] : [
+    ] 
+
+    const clientData = [
         { title: "Dashboard", link: "/", icon: <LuLayoutDashboard /> },
         { title: "Templates", link: "/templates", icon: <LuLayoutTemplate /> },
         { title: "Bulk Sender", link: "/bulk-sender", icon: <LiaMailBulkSolid /> },
         { title: "Bulk Sender Details", link: "/bulk-sender-details", icon: <FaRegMessage /> },
         { title: "Message History", link: "/message-history", icon: <LuMessagesSquare /> },
         { title: "Mangage Files", link: "/message-history", icon: <LuFileBox /> },
-        { title: "Plan Details", link: "/plan-details", icon: <GiTakeMyMoney /> },
+        { title: "Purchase Plan", link: "/purchase-plan", icon: <GiTakeMyMoney /> },
         {
             title: "Report",
             submenu: true,
@@ -45,6 +47,8 @@ const Sidebar = ({ sideBar }) => {
         { title: "Profile", link: "/profile", icon: <FiUser /> },
         { title: "Logout", link: "/logout", spacing: true, icon: <LuLogOut /> },
     ]
+    if (activePlanData.chatBotFeature) clientData.splice(4,0,   { title: "Automation", link: "/chatbot-automation", icon: <LiaMailBulkSolid /> },)
+    const Menus = role === "ADMIN" ? adminData : clientData
 
     return (
         <div className='w-full relative'>

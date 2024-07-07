@@ -34,8 +34,8 @@ exports.get = async (req, res) => {
         dataUrl = dataUrl.select(selectFix)
     }
 
-    let page = Number(req.query.page) || 1
-    let limit = Number(req.query.limit) || 50
+    let page = Number(req.body.page) || 1
+    let limit = Number(req.body.limit) || 50
 
     if (page) {
         dataUrl = dataUrl.skip((page - 1) * limit).limit(limit)

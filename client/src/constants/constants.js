@@ -103,3 +103,25 @@ export const loginAPI = async (apiRoute, data) => {
         return error.response.data
     }
 }
+
+
+export const getDateTimeAfterDays = (dayCount) => {
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() + dayCount);
+    return formatDateTime(startDate);
+}
+
+
+export const getCurrentDateTime = () => {
+    const now = new Date();
+    return formatDateTime(now);
+}
+function formatDateTime(date) {
+    const year = date.getUTCFullYear();
+    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(date.getUTCDate()).padStart(2, '0');
+    const hours = String(date.getUTCHours()).padStart(2, '0');
+    const minutes = String(date.getUTCMinutes()).padStart(2, '0');
+    const seconds = String(date.getUTCSeconds()).padStart(2, '0');
+    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}+00:00`;
+}

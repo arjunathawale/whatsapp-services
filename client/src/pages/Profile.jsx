@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react'
 import Header from '../components/Header'
-import { MdEdit } from "react-icons/md";
 import { useSelector } from 'react-redux';
 import { getAPI } from '../constants/constants';
 import { toast } from 'react-toastify';
@@ -57,7 +56,7 @@ const Profile = () => {
                 <div className='flex justify-between'>
                   <p className='text-black text-sm font-light w-[40%]'>Client Email</p>
                   <span className='text-l text-l font-light w-[10%]'>:</span>
-                  <p className='text-black text-sm font-medium w-[50%]'>{userData?.emailId}</p>
+                  <p className='text-black text-sm font-medium w-[50%]  break-all'>{userData?.emailId}</p>
                 </div>
                 <div className='flex justify-between'>
                   <p className='text-black text-sm font-light w-[40%]'>Client PAN</p>
@@ -67,7 +66,7 @@ const Profile = () => {
                 <div className='flex justify-between'>
                   <p className='text-black text-sm font-light w-[40%]'>Client GST</p>
                   <span className='text-l text-l font-light w-[10%]'>:</span>
-                  <p className='text-black text-sm font-medium w-[50%] uppercase'>{userData?.gstNo}</p>
+                  <p className='text-black text-sm font-medium w-[50%] uppercase  break-all'>{userData?.gstNo}</p>
                 </div>
               </div>
               <div className='w-1/2 gap-1 px-1'>
@@ -106,34 +105,34 @@ const Profile = () => {
                 <div className='flex justify-between'>
                   <p className='text-black text-sm font-light w-[40%]'>Phone No ID</p>
                   <span className='text-l text-l font-light w-[10%]'>:</span>
-                  <p className='text-black text-sm font-medium w-[50%]'>{userCrendentials?.wpPhoneNoId}</p>
+                  <p className='text-black text-sm font-medium w-[50%] break-all'>{userCrendentials?.wpPhoneNoId}</p>
                 </div>
                 <div className='flex justify-between'>
                   <p className='text-black text-sm font-light w-[40%]'>Bussiness Account ID</p>
                   <span className='text-l text-l font-light w-[10%]'>:</span>
-                  <p className='text-black text-sm font-medium w-[50%]'>{userCrendentials?.wpBussinessAccId}</p>
+                  <p className='text-black text-sm font-medium w-[50%]  break-all'>{userCrendentials?.wpBussinessAccId}</p>
                 </div>
                 <div className='flex justify-between'>
                   <p className='text-black text-sm font-light w-[40%]'>App ID </p>
                   <span className='text-l text-l font-light w-[10%]'>:</span>
-                  <p className='text-black text-sm font-medium w-[50%]'>{userCrendentials?.wpAppId}</p>
+                  <p className='text-black text-sm font-medium w-[50%]  break-all'>{userCrendentials?.wpAppId}</p>
                 </div>
               </div>
               <div className='w-1/2 gap-1 px-1'>
                 <div className='flex justify-between'>
                   <p className='text-black text-sm font-light w-[25%]'>API Version</p>
                   <span className='text-l text-l font-light w-[5%]'>:</span>
-                  <p className='text-black text-sm font-medium w-[70%]'>{userCrendentials?.wpApiVersion}</p>
+                  <p className='text-black text-sm font-medium w-[70%] break-all'>{userCrendentials?.wpApiVersion}</p>
                 </div>
                 <div className='flex justify-between'>
                   <p className='text-black text-sm font-light w-[25%]'>Webhook Url</p>
                   <span className='text-l text-l font-light w-[5%]'>:</span>
-                  <p className='text-black text-sm font-medium w-[70%]'>http://www.bookmyappointment.com/webhook</p>
+                  <p className='text-black text-sm font-medium w-[70%] break-all'>http://www.bookmyappointment.com/webhook</p>
                 </div>
                 <div className='flex justify-between'>
                   <p className='text-black text-sm font-light w-[25%]'>Verify Token</p>
                   <span className='text-l text-l font-light w-[5%]'>:</span>
-                  <p className='text-black text-sm font-medium w-[70%]'>HlnKLTOoELo0Bmpj7jc2yZAnli</p>
+                  <p className='text-black text-sm font-medium w-[70%] break-all'>HlnKLTOoELo0Bmpj7jc2yZAnli</p>
                 </div>
                 <div className='flex justify-between'>
                   <p className='text-black text-sm font-light w-[25%]'>Secret Key</p>

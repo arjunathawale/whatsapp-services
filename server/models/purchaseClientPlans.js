@@ -2,13 +2,12 @@ const mongoose = require('mongoose');
 
 const purchaseClientPlanSchema = new mongoose.Schema({
     planId: {
-        type: new mongoose.Schema.Types.ObjectId,
+        type: mongoose.Schema.Types.ObjectId,
         required: [true, 'planId is required']
     },
     wpClientId: {
-        type: new mongoose.Schema.Types.ObjectId,
+        type: mongoose.Schema.Types.ObjectId,
         required: [true, 'wpClientId is required'],
-        default: 'MONTHLY'
     },
     startDatetime: {
         type: Date,

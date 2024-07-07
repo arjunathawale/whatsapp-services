@@ -20,5 +20,6 @@ router
    .use('/api/bulkSender', require('./bulkSender'))
    .use('/api/bulkSenderDetail', require('./bulkSenderDetail'))
    .use('/api/messageHistory', require('./messageHistory'))
+   .use('/api/purchaseClientPlan', require('./purchaseClientPlan'))
 
 module.exports = router;

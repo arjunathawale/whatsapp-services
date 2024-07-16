@@ -1,7 +1,7 @@
 
 const clientConfig = require('../models/clientWPConfig');
 const mm = require("../services/global")
-const moogoose = require('mongoose');
+const mongoose = require('mongoose');
 
 
 exports.get = async (req, res) => {
@@ -47,7 +47,7 @@ exports.get = async (req, res) => {
 exports.create = async (req, res) => {
 
     const client = new clientConfig({
-        wpClientId: new moogoose.Types.ObjectId(req.body.wpClientId),
+        wpClientId: new mongoose.Types.ObjectId(req.body.wpClientId),
         wpRegisteredMobileNo: req.body.wpRegisteredMobileNo,
         wpPhoneNoId: req.body.wpPhoneNoId,
         wpBussinessAccId: req.body.wpBussinessAccId,

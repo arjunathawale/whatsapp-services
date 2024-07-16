@@ -14,30 +14,18 @@ client.on('error', (err) => {
 // Connect to the Redis server
 client.connect();
 
-// Function to delete all hash keys
-async function deleteAllHashes() {
+exports.setItem = async (key, value) => {
     try {
-        // Get all keys
-        const keys = await client.keys('*');
-        // console.log("Keys: ", keys);
-        // Iterate over the keys and check their type
-        for (const key of keys) {
-            const type = await client.type(key);
-            console.log(`Key: ${key}, Type: ${type}`);
-            if (type === 'hash') {
-                await client.del(key);
-                console.log(`Deleted hash: ${key}`);
-            }
-        }
-
-        console.log('All hash keys have been deleted.');
-    } catch (err) {
-        console.error('Error deleting hash keys:', err);
-    } finally {
-        // Close the Redis client
-        client.quit();
+        return await client.set(key, value);
+    } catch (error) {
+        return error
     }
 }
 
-// Delete all hashes
-deleteAllHashes();
+exports.getItem = async (key) => {y
+    try {
+        return await client.get(key);
+    } catch (error) {
+        return error
+    }
+}

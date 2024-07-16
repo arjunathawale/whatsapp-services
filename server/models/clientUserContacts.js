@@ -17,13 +17,9 @@ const clientUserContactSchema = new moongoose.Schema({
         required: [true, 'name is required'],
         maxlength: 64
     },
-    // createdAt: {
-    //     type: String,
-    //     default: mm.getCurrentDate()
-    // },
-    // updatedAt: {
-    //     type: String,
-    // },
+    isSubscribed: {
+        type: String,
+    }
 }, { timestamps: true })
 
 module.exports = moongoose.model('ClientUserContact', clientUserContactSchema)

@@ -4,7 +4,7 @@ const mm = require("../services/global")
 const moogoose = require('mongoose');
 
 exports.get = async (req, res) => {
-    const { wpClientId, mobileNo, name, sort, select, id } = req.body
+    const { wpClientId, mobileNo, name,isSubscribed, sort, select, id } = req.body
     const filterObject = {}
 
 

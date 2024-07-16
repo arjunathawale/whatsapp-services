@@ -11,6 +11,7 @@ exports.addToStatusQueue = async (queueName, data, priority) => {
     try {
         const res = await statusQueues.add(queueName, data, {
             priority: priority,
+            delay: 5000
         });
         console.log("Webhook Status added to queue : ", res.id);
     } catch (error) {

@@ -2,6 +2,7 @@ const { Worker } = require("bullmq");
 const request = require('request');
 const bulkSenderDetails = require('../../models/bulkSenderDetails');
 const messageHistory = require('../../models/messageHistory');
+const clientUserContacts = require("../../models/clientUserContacts");
 
 exports.BulkWorker = async () => {
     console.log("Starting Worker...");
@@ -37,21 +38,34 @@ const sendMessage = async (data) => {
             body: data.messageDetails
         };
 
+
+
         request(messageOptions, async (error, response, body) => {
             if (error) {
                 console.log("Error in Request :-", error);
             } else {
                 const message = data.messageHistory
-                if (response.statusCode == 200) {
+                const findUser = await clientUserContacts.findOneAndUpdate(
+                    { wpClientId: data.BulkDetailsInsert.wpClientId, mobileNo: data.BulkDetailsInsert.mobileNumber },
+                    {
+                        wpClientId: data.BulkDetailsInsert.wpClientId,
+                        mobileNo: data.BulkDetailsInsert.mobileNumber,
+                        name: "",
+                        isSubscribed: 'subscribed'
+                    },
+                    { upsert: true }, { new: true }
+                )
 
+                if (response.statusCode == 200) {
                     message.wpMessageId = body.messages[0].id
                     message.messageStatus = "pending"
                     message.mobileNumber = data.BulkDetailsInsert.mobileNumber
                     message.templateName = data?.messageDetails?.template?.name
                     message.messageDateTime = new Date()
+                    message.userId = findUser._id
                     const savedMessageData = await messageHistory.create(message);
-                    
-                    
+
+
                     let element = data.BulkDetailsInsert
                     element.wpMessageId = body.messages[0].id
                     element.messageStatus = "pending"
@@ -63,6 +77,7 @@ const sendMessage = async (data) => {
                     message.mobileNumber = data.BulkDetailsInsert.mobileNumber
                     message.templateName = data?.messageDetails?.template?.name
                     message.messageDateTime = new Date()
+                    message.userId = findUser._id
                     const savedMessageData = await messageHistory.create(message);
 
 
@@ -78,4 +93,3 @@ const sendMessage = async (data) => {
         console.log("Error sending message : ", error);
     }
 }
-

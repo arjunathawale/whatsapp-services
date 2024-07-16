@@ -21,5 +21,6 @@ router
    .use('/api/bulkSenderDetail', require('./bulkSenderDetail'))
    .use('/api/messageHistory', require('./messageHistory'))
    .use('/api/purchaseClientPlan', require('./purchaseClientPlan'))
+   .use('/api/chatBotScript', require('./chatBotScript'))
 
 module.exports = router;

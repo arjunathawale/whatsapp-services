@@ -20,6 +20,11 @@ const messageHistorySchema = new mongoose.Schema({
         ref: 'PricingPlan',
         required: [true, 'planId is required']
     },
+    userId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'ClientUserContact',
+        required: [true, 'userId is required']
+    },
     wpMessageId: {
         type: String
     },

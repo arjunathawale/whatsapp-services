@@ -1,11 +1,8 @@
 const express = require('express');
 const app = express();
 const https = require('https');
-// exports.jwt = require('jsonwebtoken');
 const helmet = require('helmet');
 exports.dotenv = require('dotenv').config();
-// exports.applicationkey = process.env.APPLICATION_KEY;
-// const dbname = process.env.MYSQL_DATABASE;
 const port = process.env.PORT || 4000;
 const hostname = process.env.HOST_NAME;
 const path = require('path');
@@ -37,10 +34,9 @@ const startServer = async () => {
         server.listen(port, hostname, () => {
             console.log('Whatsapp Service listening on', hostname + ':' + port);
         });
-        // require('./services/Queues/BulkProducer').addToQueue();
         require('./services/Queues/BulkWorker').BulkWorker();
         require('./services/Queues/WebhookStatusWorker').statusWorker();
-        // require('./config/scheduler').schedulerJob()
+        require('./services/Queues/ChatBotWorker').chatBotWorker();
     } catch (error) {
         console.log(error);
     }

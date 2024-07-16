@@ -62,8 +62,8 @@ exports.get = async (req, res) => {
         dataUrl = dataUrl.select(selectFix)
     }
 
-    let page = Number(req.query.page) || 1
-    let limit = Number(req.query.limit) || 50
+    let page = Number(req.body.page) || 1
+    let limit = Number(req.body.limit) || 50
 
     if (page) {
         dataUrl = dataUrl.skip((page - 1) * limit).limit(limit)
@@ -354,3 +354,7 @@ exports.updatePassword = async (req, res) => {
 }
 
 
+exports.bookAppointment = async (req, res) => {
+    const { date, batch } = req.body
+    res.status(200).send({ status: true, message: "success", data: [{ date, batch, tokenNumber: "14072024/001", fileUrl: "https://admin.marathamatrimony.net:8924/static/fileReceipt/MM254008.pdf" }] });
+}

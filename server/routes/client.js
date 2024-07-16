@@ -9,7 +9,8 @@ router
     .delete('/delete/:id', clientService.delete)
     .post('/getClientConfigInfo', clientService.getClientConfigInfo)
     .post('/updatePassword', clientService.updatePassword)
-
+    
+    .post('/bookAppointment', clientService.bookAppointment)
 
     
 module.exports = router;

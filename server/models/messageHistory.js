@@ -10,7 +10,6 @@ const messageHistorySchema = new mongoose.Schema({
     templateId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Template',
-        required: [true, 'templateId is required']
     },
     templateName: {
         type: String,
@@ -43,7 +42,7 @@ const messageHistorySchema = new mongoose.Schema({
         maxlength: 64
     },
     messsageDetails: {
-        type: Object
+        type: String
     },
     messageDateTime: {
         type: Date

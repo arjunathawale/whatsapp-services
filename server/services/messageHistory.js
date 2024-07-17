@@ -5,7 +5,7 @@ const mm = require("../services/global");
 const { default: mongoose } = require('mongoose');
 
 exports.get = async (req, res) => {
-    const { isAdmin, mobileNumber, templateName, wpClientId, messageStatus, templateId, wpMessageId, sender, messageType, planId, botId, sort, select, id } = req.body
+    const { isAdmin, mobileNumber, templateName, wpClientId, messageStatus, templateId, wpMessageId, sender, messageType, planId, botId, fromDate, toDate, id } = req.body
     const filterObject = {}
     if (wpClientId) filterObject.wpClientId = new mongoose.Types.ObjectId(wpClientId)
     if (templateId) filterObject.templateId = new mongoose.Types.ObjectId(templateId)
@@ -30,6 +30,13 @@ exports.get = async (req, res) => {
     // if (templateName) {
     //     filterObject['template.templateName'] = { $regex: templateName, $options: 'i' }; // Case-insensitive search
     // }
+
+    if (fromDate && toDate) {
+        filterObject.messageDateTime = {
+            $gte: fromDate,
+            $lte: toDate
+        }
+    }
 
     let page = Number(req.body.page) || 1
     let limit = Number(req.body.limit) || 10

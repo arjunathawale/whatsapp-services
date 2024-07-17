@@ -3,6 +3,7 @@ const userChatHistory = require('../models/userChatHistory');
 const bot = require('../models/bots');
 const clientUserContacts = require('../models/clientUserContacts');
 const userInputData = require('../models/userInputData');
+const messageHistory = require('../models/messageHistory');
 const mm = require('../services/global')
 const request = require('request');
 const { addToStatusQueue } = require('./Queues/WebhookStatusProducer');
@@ -92,7 +93,7 @@ exports.handleWebhookRequests = async (req, res) => {
 }
 
 // first message like ('hello', 'hi', 'hey', 'home', 'main', 'menu')
-const greetMessage = async (message, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, wpClientId, botId, userId, callbackFunction) => {
+const greetMessage = async (message, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, wpClientId, botId, userId,planId,  callbackFunction) => {
     try {
         const insertUserChatHistory = await userChatHistory.create({
             botId: botId,
@@ -142,7 +143,7 @@ const greetMessage = async (message, userMobileNo, phoneNumberId, permanentAcces
                                 if (!insertAdminChatHistory) {
                                     callbackFunction("Failed to Insert Admin chat history")
                                 } else {
-                                    mm.sendMSG(messageContent, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, (error, result) => {
+                                    mm.sendMSG(messageContent, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion,wpClientId, botId, userId,planId, (error, result) => {
                                         if (error) {
                                             console.log("Error in get method: ", error);
                                             callbackFunction('Failed to send message');
@@ -177,7 +178,7 @@ const greetMessage = async (message, userMobileNo, phoneNumberId, permanentAcces
                                 if (!insertAdminChatHistory) {
                                     callbackFunction("Failed to Insert Admin chat history")
                                 } else {
-                                    mm.sendMSGWithImage(mediaUrl, caption, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, (error, result) => {
+                                    mm.sendMSGWithImage(mediaUrl, caption, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion,wpClientId, botId, userId,planId, (error, result) => {
                                         if (error) {
                                             console.log("Failed to send image message: ", error);
                                             callbackFunction('Failed to send image message');
@@ -192,8 +193,8 @@ const greetMessage = async (message, userMobileNo, phoneNumberId, permanentAcces
                                         }
                                     });
                                 }
-
-
+    
+    
                             } else if (scriptData.messageType === "DOCUMENT") {
                                 let caption = scriptData.messageDraft,
                                     mediaUrl = scriptData.mediaUrl,
@@ -206,7 +207,7 @@ const greetMessage = async (message, userMobileNo, phoneNumberId, permanentAcces
                                     messageContent: caption,
                                     mediaUrl: mediaUrl,
                                     messageDatetime: new Date(),
-                                    mainRedirectId: null,
+                                    mainRedirectId: scriptData.redirectId,
                                     redirectId: scriptData.redirectId,
                                     userInputSaveIn: scriptData.variableName,
                                     validationType: scriptData.validationType,
@@ -215,7 +216,7 @@ const greetMessage = async (message, userMobileNo, phoneNumberId, permanentAcces
                                 if (!insertAdminChatHistory) {
                                     callbackFunction("Failed to Insert Admin chat history")
                                 } else {
-                                    mm.sendDocumentMedia(caption, mediaUrl, filename, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, (error, result) => {
+                                    mm.sendDocumentMedia(caption, mediaUrl, filename, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion,wpClientId, botId, userId,planId, (error, result) => {
                                         if (error) {
                                             console.log("Failed to send Document message: ", error);
                                             callbackFunction('Failed to send Document message');
@@ -258,12 +259,12 @@ const greetMessage = async (message, userMobileNo, phoneNumberId, permanentAcces
                                         }
                                         listData.push(listObject)
                                     }
-
+    
                                     const insertAdminChatHistory = await userChatHistory.insertMany(manyInsertArray)
                                     if (!insertAdminChatHistory) {
                                         callbackFunction("Failed to Insert Admin chat history")
                                     } else {
-                                        mm.sendInteractiveButtonMSG(messageContent, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, listData, (error, result) => {
+                                        mm.sendInteractiveButtonMSG(messageContent, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, listData,wpClientId, botId, userId,planId, (error, result) => {
                                             if (error) {
                                                 console.log("Failed to send Button message: ", error);
                                                 callbackFunction('Failed to send Button message');
@@ -284,6 +285,7 @@ const greetMessage = async (message, userMobileNo, phoneNumberId, permanentAcces
                             } else if (scriptData.messageType === "LIST") {
                                 let messageContent = scriptData.messageDraft,
                                     buttonText = scriptData.listButtonName,
+                                    listData = [],
                                     manyInsertArray = [],
                                     arrayData = scriptData.buttonOrListData
                                 if (arrayData.length > 0) {
@@ -296,21 +298,28 @@ const greetMessage = async (message, userMobileNo, phoneNumberId, permanentAcces
                                             sender: "A",
                                             messageContent: element.optionName,
                                             messageDatetime: new Date(),
-                                            mainRedirectId: element.id,
-                                            redirectId: element.id,
+                                            mainRedirectId: element.id + "_" + (i + 1),
+                                            redirectId: element.id + "_" + (i + 1),
                                             userInputSaveIn: scriptData.variableName,
                                             validationType: scriptData.validationType,
                                             prevRedirectId: scriptData.prevRedirectId,
                                         }
                                         manyInsertArray.push(object)
-
+                                        const listObject = {
+                                            id: element.id + "_" + (i + 1),
+                                            optionName: element.optionName
+                                        }
+                                        listData.push(listObject)
+    
                                     }
+    
+                                    console.log("listData: ", listData);
                                     const insertAdminChatHistory = await userChatHistory.insertMany(manyInsertArray)
                                     if (!insertAdminChatHistory) {
                                         callbackFunction("Failed to Insert Admin chat history")
                                     }
-
-                                    mm.sendInteractiveListMSGNew(messageContent, buttonText, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, arrayData, (error, result) => {
+    
+                                    mm.sendInteractiveListMSGNew(messageContent, buttonText, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, listData,wpClientId, botId, userId,planId, (error, result) => {
                                         if (error) {
                                             console.log("Failed to send Button message: ", error);
                                             callbackFunction('Failed to send Button message');
@@ -327,11 +336,193 @@ const greetMessage = async (message, userMobileNo, phoneNumberId, permanentAcces
                                 } else {
                                     callbackFunction("Not Found buttonOrListData")
                                 }
+                            } else if (scriptData.messageType === "API_DATA") {
+                                let bodyParams = scriptData.bodyParams;
+                                let keys = []
+                                if (bodyParams) {
+                                    Object.keys(bodyParams).forEach((key) => {
+                                        keys.push(bodyParams[key])
+                                    })
+                                } else {
+                                    keys.push("")
+                                }
+    
+                                const resultInputData = await userInputData.find({ botId: botId, mobileNo: userMobileNo, variableName: { $in: keys } }).select({ selectedValue: 1, variableName: 1, _id: 0 })
+                                Object.keys(bodyParams).forEach((key) => {
+                                    for (let i = 0; i < resultInputData.length; i++) {
+                                        const element = resultInputData[i];
+                                        if (bodyParams[key] === element.variableName) {
+                                            bodyParams[key] = element.selectedValue
+                                        }
+                                    }
+                                })
+    
+                                const newObject = {
+                                    ...bodyParams,
+                                    ...limitObject
+                                }
+                                const requestOptions = {
+                                    url: scriptData.apiUrl,
+                                    method: scriptData.method,
+                                    headers: scriptData.headerParams,
+                                    body: newObject,
+                                    json: true
+                                }
+                                request(requestOptions, async (error, response, body) => {
+                                    if (error) {
+                                        console.log("Error in request", error);
+                                        callbackFunction("Failed to Request API Data")
+                                    } else {
+                                        if (response.statusCode === 200) {
+                                            let dataKey = scriptData?.sampleDataKey?.data,
+                                                dataId = scriptData?.sampleDataKey?.id,
+                                                dataName = scriptData?.sampleDataKey?.name,
+                                                dataDesc = scriptData?.sampleDataKey?.desc;
+                                            fileUrl = scriptData?.sampleDataKey?.fileUrl;
+                                            if (body[dataKey].length > 0) {
+                                                if (scriptData.messageSubType === "TEXT") {
+                                                    let messageContent = scriptData.messageDraft
+                                                    const keyData = await flattenCartData(body[dataKey], messageContent, dataName, dataId, "", "")
+                                                    const insertAdminChatHistory = await userChatHistory.create({
+                                                        botId: botId,
+                                                        userId: userId,
+                                                        userMobileNo: userMobileNo,
+                                                        sender: "A",
+                                                        messageContent: keyData.stringValue,
+                                                        messageDatetime: new Date(),
+                                                        mainRedirectId: null,
+                                                        redirectId: scriptData.redirectId,
+                                                        userInputSaveIn: scriptData.variableName,
+                                                        validationType: scriptData.validationType,
+                                                        prevRedirectId: scriptData.prevRedirectId,
+                                                    })
+                                                    if (!insertAdminChatHistory) {
+                                                        callbackFunction("Failed to Insert Admin chat history")
+                                                    } else {
+                                                        mm.sendMSG(keyData.stringValue, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion,wpClientId, botId, userId,planId, (error, result) => {
+                                                            if (error) {
+                                                                console.log("Error in get method: ", error);
+                                                                callbackFunction('Failed to send message');
+                                                            } else {
+                                                                redirectId = scriptData.redirectId;
+                                                                let waitTime = scriptData.waitTime;
+                                                                if (waitTime !== null && waitTime > 0) {
+                                                                    setTimeout(processScript, waitTime);
+                                                                } else {
+                                                                    callbackFunction(null, "Success");
+                                                                }
+                                                            }
+                                                        });
+                                                    }
+                                                } else if (scriptData.messageSubType === "LIST") {
+                                                    let messageContent = scriptData.messageDraft,
+                                                        buttonText = scriptData.listButtonName,
+                                                        listData = [],
+                                                        manyInsertArray = []
+                                                    for (let i = 0; i < body[dataKey].length; i++) {
+                                                        const element = body[dataKey][i];
+    
+                                                        const object = {
+                                                            botId: botId,
+                                                            userId: userId,
+                                                            userMobileNo: userMobileNo,
+                                                            sender: "A",
+                                                            messageContent: element[dataName],
+                                                            messageDatetime: new Date(),
+                                                            mainRedirectId: scriptData.redirectId + "_" + (i + 1),
+                                                            redirectId: scriptData.redirectId + "_" + (i + 1),
+                                                            userInputSaveIn: scriptData.variableName,
+                                                            validationType: scriptData.validationType,
+                                                            prevRedirectId: scriptData.prevRedirectId,
+                                                        }
+                                                        manyInsertArray.push(object)
+                                                        const listObject = {
+                                                            id: scriptData.redirectId + "_" + (i + 1),
+                                                            optionName: element[dataName],
+                                                            desc: element[dataDesc]
+                                                        }
+                                                        listData.push(listObject)
+                                                    }
+    
+                                                    const insertAdminChatHistory = await userChatHistory.insertMany(manyInsertArray)
+                                                    if (!insertAdminChatHistory) {
+                                                        callbackFunction("Failed to Insert Admin chat history")
+                                                    } else {
+                                                        mm.sendInteractiveListMSGNew(messageContent, buttonText, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, listData,wpClientId, botId, userId,planId, (error, result) => {
+                                                            if (error) {
+                                                                console.log("Failed to send Button message: ", error);
+                                                                callbackFunction('Failed to send Button message');
+                                                            } else {
+                                                                redirectId = scriptData.redirectId;
+                                                                let waitTime = scriptData.waitTime;
+                                                                if (waitTime !== null && waitTime > 0) {
+                                                                    setTimeout(processScript, waitTime);
+                                                                } else {
+                                                                    callbackFunction(null, "Success");
+                                                                }
+                                                            }
+                                                        });
+                                                    }
+                                                } else if (scriptData.messageSubType === "DOCUMENT") {
+    
+                                                    const keyData = await flattenCartData(body[dataKey], scriptData.messageDraft, dataName, dataId, fileUrl, "")
+    
+    
+                                                    console.log("keyData", keyData);
+                                                    let caption = keyData.stringValue,
+                                                        mediaUrl = keyData.fileUrlValue,
+                                                        filename = Date.now()
+                                                    const insertAdminChatHistory = await userChatHistory.create({
+                                                        botId: botId,
+                                                        userId: userId,
+                                                        userMobileNo: userMobileNo,
+                                                        sender: "A",
+                                                        messageContent: caption,
+                                                        mediaUrl: mediaUrl,
+                                                        messageDatetime: new Date(),
+                                                        mainRedirectId: scriptData.redirectId,
+                                                        redirectId: scriptData.redirectId,
+                                                        userInputSaveIn: scriptData.variableName,
+                                                        validationType: scriptData.validationType,
+                                                        prevRedirectId: scriptData.prevRedirectId,
+                                                    })
+                                                    if (!insertAdminChatHistory) {
+                                                        callbackFunction("Failed to Insert Admin chat history")
+                                                    } else {
+                                                        mm.sendDocumentMedia(caption, mediaUrl, filename, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion,wpClientId, botId, userId,planId, (error, result) => {
+                                                            if (error) {
+                                                                console.log("Failed to send Document message: ", error);
+                                                                callbackFunction('Failed to send Document message');
+                                                            } else {
+                                                                redirectId = scriptData.redirectId;
+                                                                let waitTime = scriptData.waitTime;
+                                                                if (waitTime !== null && waitTime > 0) {
+                                                                    setTimeout(processScript, waitTime);
+                                                                } else {
+                                                                    callbackFunction(null, "Success");
+                                                                }
+                                                            }
+                                                        });
+                                                    }
+                                                } else {
+                                                    callbackFunction("messageSubType not matched")
+                                                }
+                                            } else {
+                                                callbackFunction("No Data Found")
+                                            }
+    
+                                        } else {
+                                            callbackFunction("Failed to send API Data")
+                                        }
+                                    }
+                                })
                             } else {
                                 callbackFunction("messageType not matched")
                             }
                         }
+    
                     }
+    
                     processScript()
                 }
             }
@@ -343,7 +534,7 @@ const greetMessage = async (message, userMobileNo, phoneNumberId, permanentAcces
 }
 
 // if user type text
-const textMessage = async (message, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, wpClientId, botId, userId, callbackFunction) => {
+const textMessage = async (message, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, wpClientId, botId, userId,planId,  callbackFunction) => {
     try {
         const userChatHistorys = await userChatHistory.findOne({ userMobileNo: userMobileNo, botId: botId, }).sort({ _id: -1 }).limit(1)
         if (userChatHistorys) {
@@ -413,7 +604,7 @@ const textMessage = async (message, userMobileNo, phoneNumberId, permanentAccess
                                         if (!insertAdminChatHistory) {
                                             callbackFunction("Failed to Insert Admin chat history")
                                         } else {
-                                            mm.sendMSG(messageContent, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, (error, result) => {
+                                            mm.sendMSG(messageContent, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion,wpClientId, botId, userId,planId, (error, result) => {
                                                 if (error) {
                                                     console.log("Error in get method: ", error);
                                                     callbackFunction('Failed to send message');
@@ -448,7 +639,7 @@ const textMessage = async (message, userMobileNo, phoneNumberId, permanentAccess
                                         if (!insertAdminChatHistory) {
                                             callbackFunction("Failed to Insert Admin chat history")
                                         } else {
-                                            mm.sendMSGWithImage(mediaUrl, caption, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, (error, result) => {
+                                            mm.sendMSGWithImage(mediaUrl, caption, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion,wpClientId, botId, userId,planId, (error, result) => {
                                                 if (error) {
                                                     console.log("Failed to send image message: ", error);
                                                     callbackFunction('Failed to send image message');
@@ -463,8 +654,8 @@ const textMessage = async (message, userMobileNo, phoneNumberId, permanentAccess
                                                 }
                                             });
                                         }
-
-
+            
+            
                                     } else if (scriptData.messageType === "DOCUMENT") {
                                         let caption = scriptData.messageDraft,
                                             mediaUrl = scriptData.mediaUrl,
@@ -477,7 +668,7 @@ const textMessage = async (message, userMobileNo, phoneNumberId, permanentAccess
                                             messageContent: caption,
                                             mediaUrl: mediaUrl,
                                             messageDatetime: new Date(),
-                                            mainRedirectId: null,
+                                            mainRedirectId: scriptData.redirectId,
                                             redirectId: scriptData.redirectId,
                                             userInputSaveIn: scriptData.variableName,
                                             validationType: scriptData.validationType,
@@ -486,7 +677,7 @@ const textMessage = async (message, userMobileNo, phoneNumberId, permanentAccess
                                         if (!insertAdminChatHistory) {
                                             callbackFunction("Failed to Insert Admin chat history")
                                         } else {
-                                            mm.sendDocumentMedia(caption, mediaUrl, filename, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, (error, result) => {
+                                            mm.sendDocumentMedia(caption, mediaUrl, filename, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion,wpClientId, botId, userId,planId, (error, result) => {
                                                 if (error) {
                                                     console.log("Failed to send Document message: ", error);
                                                     callbackFunction('Failed to send Document message');
@@ -529,12 +720,12 @@ const textMessage = async (message, userMobileNo, phoneNumberId, permanentAccess
                                                 }
                                                 listData.push(listObject)
                                             }
-
+            
                                             const insertAdminChatHistory = await userChatHistory.insertMany(manyInsertArray)
                                             if (!insertAdminChatHistory) {
                                                 callbackFunction("Failed to Insert Admin chat history")
                                             } else {
-                                                mm.sendInteractiveButtonMSG(messageContent, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, listData, (error, result) => {
+                                                mm.sendInteractiveButtonMSG(messageContent, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, listData,wpClientId, botId, userId,planId, (error, result) => {
                                                     if (error) {
                                                         console.log("Failed to send Button message: ", error);
                                                         callbackFunction('Failed to send Button message');
@@ -580,16 +771,16 @@ const textMessage = async (message, userMobileNo, phoneNumberId, permanentAccess
                                                     optionName: element.optionName
                                                 }
                                                 listData.push(listObject)
-
+            
                                             }
-
+            
                                             console.log("listData: ", listData);
                                             const insertAdminChatHistory = await userChatHistory.insertMany(manyInsertArray)
                                             if (!insertAdminChatHistory) {
                                                 callbackFunction("Failed to Insert Admin chat history")
                                             }
-
-                                            mm.sendInteractiveListMSGNew(messageContent, buttonText, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, listData, (error, result) => {
+            
+                                            mm.sendInteractiveListMSGNew(messageContent, buttonText, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, listData,wpClientId, botId, userId,planId, (error, result) => {
                                                 if (error) {
                                                     console.log("Failed to send Button message: ", error);
                                                     callbackFunction('Failed to send Button message');
@@ -606,20 +797,200 @@ const textMessage = async (message, userMobileNo, phoneNumberId, permanentAccess
                                         } else {
                                             callbackFunction("Not Found buttonOrListData")
                                         }
+                                    } else if (scriptData.messageType === "API_DATA") {
+                                        let bodyParams = scriptData.bodyParams;
+                                        let keys = []
+                                        if (bodyParams) {
+                                            Object.keys(bodyParams).forEach((key) => {
+                                                keys.push(bodyParams[key])
+                                            })
+                                        } else {
+                                            keys.push("")
+                                        }
+            
+                                        const resultInputData = await userInputData.find({ botId: botId, mobileNo: userMobileNo, variableName: { $in: keys } }).select({ selectedValue: 1, variableName: 1, _id: 0 })
+                                        Object.keys(bodyParams).forEach((key) => {
+                                            for (let i = 0; i < resultInputData.length; i++) {
+                                                const element = resultInputData[i];
+                                                if (bodyParams[key] === element.variableName) {
+                                                    bodyParams[key] = element.selectedValue
+                                                }
+                                            }
+                                        })
+            
+                                        const newObject = {
+                                            ...bodyParams,
+                                            ...limitObject
+                                        }
+                                        const requestOptions = {
+                                            url: scriptData.apiUrl,
+                                            method: scriptData.method,
+                                            headers: scriptData.headerParams,
+                                            body: newObject,
+                                            json: true
+                                        }
+                                        request(requestOptions, async (error, response, body) => {
+                                            if (error) {
+                                                console.log("Error in request", error);
+                                                callbackFunction("Failed to Request API Data")
+                                            } else {
+                                                if (response.statusCode === 200) {
+                                                    let dataKey = scriptData?.sampleDataKey?.data,
+                                                        dataId = scriptData?.sampleDataKey?.id,
+                                                        dataName = scriptData?.sampleDataKey?.name,
+                                                        dataDesc = scriptData?.sampleDataKey?.desc;
+                                                    fileUrl = scriptData?.sampleDataKey?.fileUrl;
+                                                    if (body[dataKey].length > 0) {
+                                                        if (scriptData.messageSubType === "TEXT") {
+                                                            let messageContent = scriptData.messageDraft
+                                                            const keyData = await flattenCartData(body[dataKey], messageContent, dataName, dataId, "", "")
+                                                            const insertAdminChatHistory = await userChatHistory.create({
+                                                                botId: botId,
+                                                                userId: userId,
+                                                                userMobileNo: userMobileNo,
+                                                                sender: "A",
+                                                                messageContent: keyData.stringValue,
+                                                                messageDatetime: new Date(),
+                                                                mainRedirectId: null,
+                                                                redirectId: scriptData.redirectId,
+                                                                userInputSaveIn: scriptData.variableName,
+                                                                validationType: scriptData.validationType,
+                                                                prevRedirectId: scriptData.prevRedirectId,
+                                                            })
+                                                            if (!insertAdminChatHistory) {
+                                                                callbackFunction("Failed to Insert Admin chat history")
+                                                            } else {
+                                                                mm.sendMSG(keyData.stringValue, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion,wpClientId, botId, userId,planId, (error, result) => {
+                                                                    if (error) {
+                                                                        console.log("Error in get method: ", error);
+                                                                        callbackFunction('Failed to send message');
+                                                                    } else {
+                                                                        redirectId = scriptData.redirectId;
+                                                                        let waitTime = scriptData.waitTime;
+                                                                        if (waitTime !== null && waitTime > 0) {
+                                                                            setTimeout(processScript, waitTime);
+                                                                        } else {
+                                                                            callbackFunction(null, "Success");
+                                                                        }
+                                                                    }
+                                                                });
+                                                            }
+                                                        } else if (scriptData.messageSubType === "LIST") {
+                                                            let messageContent = scriptData.messageDraft,
+                                                                buttonText = scriptData.listButtonName,
+                                                                listData = [],
+                                                                manyInsertArray = []
+                                                            for (let i = 0; i < body[dataKey].length; i++) {
+                                                                const element = body[dataKey][i];
+            
+                                                                const object = {
+                                                                    botId: botId,
+                                                                    userId: userId,
+                                                                    userMobileNo: userMobileNo,
+                                                                    sender: "A",
+                                                                    messageContent: element[dataName],
+                                                                    messageDatetime: new Date(),
+                                                                    mainRedirectId: scriptData.redirectId + "_" + (i + 1),
+                                                                    redirectId: scriptData.redirectId + "_" + (i + 1),
+                                                                    userInputSaveIn: scriptData.variableName,
+                                                                    validationType: scriptData.validationType,
+                                                                    prevRedirectId: scriptData.prevRedirectId,
+                                                                }
+                                                                manyInsertArray.push(object)
+                                                                const listObject = {
+                                                                    id: scriptData.redirectId + "_" + (i + 1),
+                                                                    optionName: element[dataName],
+                                                                    desc: element[dataDesc]
+                                                                }
+                                                                listData.push(listObject)
+                                                            }
+            
+                                                            const insertAdminChatHistory = await userChatHistory.insertMany(manyInsertArray)
+                                                            if (!insertAdminChatHistory) {
+                                                                callbackFunction("Failed to Insert Admin chat history")
+                                                            } else {
+                                                                mm.sendInteractiveListMSGNew(messageContent, buttonText, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, listData,wpClientId, botId, userId,planId, (error, result) => {
+                                                                    if (error) {
+                                                                        console.log("Failed to send Button message: ", error);
+                                                                        callbackFunction('Failed to send Button message');
+                                                                    } else {
+                                                                        redirectId = scriptData.redirectId;
+                                                                        let waitTime = scriptData.waitTime;
+                                                                        if (waitTime !== null && waitTime > 0) {
+                                                                            setTimeout(processScript, waitTime);
+                                                                        } else {
+                                                                            callbackFunction(null, "Success");
+                                                                        }
+                                                                    }
+                                                                });
+                                                            }
+                                                        } else if (scriptData.messageSubType === "DOCUMENT") {
+            
+                                                            const keyData = await flattenCartData(body[dataKey], scriptData.messageDraft, dataName, dataId, fileUrl, "")
+            
+            
+                                                            console.log("keyData", keyData);
+                                                            let caption = keyData.stringValue,
+                                                                mediaUrl = keyData.fileUrlValue,
+                                                                filename = Date.now()
+                                                            const insertAdminChatHistory = await userChatHistory.create({
+                                                                botId: botId,
+                                                                userId: userId,
+                                                                userMobileNo: userMobileNo,
+                                                                sender: "A",
+                                                                messageContent: caption,
+                                                                mediaUrl: mediaUrl,
+                                                                messageDatetime: new Date(),
+                                                                mainRedirectId: scriptData.redirectId,
+                                                                redirectId: scriptData.redirectId,
+                                                                userInputSaveIn: scriptData.variableName,
+                                                                validationType: scriptData.validationType,
+                                                                prevRedirectId: scriptData.prevRedirectId,
+                                                            })
+                                                            if (!insertAdminChatHistory) {
+                                                                callbackFunction("Failed to Insert Admin chat history")
+                                                            } else {
+                                                                mm.sendDocumentMedia(caption, mediaUrl, filename, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion,wpClientId, botId, userId,planId, (error, result) => {
+                                                                    if (error) {
+                                                                        console.log("Failed to send Document message: ", error);
+                                                                        callbackFunction('Failed to send Document message');
+                                                                    } else {
+                                                                        redirectId = scriptData.redirectId;
+                                                                        let waitTime = scriptData.waitTime;
+                                                                        if (waitTime !== null && waitTime > 0) {
+                                                                            setTimeout(processScript, waitTime);
+                                                                        } else {
+                                                                            callbackFunction(null, "Success");
+                                                                        }
+                                                                    }
+                                                                });
+                                                            }
+                                                        } else {
+                                                            callbackFunction("messageSubType not matched")
+                                                        }
+                                                    } else {
+                                                        callbackFunction("No Data Found")
+                                                    }
+            
+                                                } else {
+                                                    callbackFunction("Failed to send API Data")
+                                                }
+                                            }
+                                        })
                                     } else {
                                         callbackFunction("messageType not matched")
                                     }
                                 }
-
+            
                             }
-
+            
                             processScript()
                         }
                     }
                 } else {
                     // restart the chat logic here
                     console.log("Restarting Not Found");
-                    mm.sendMSG("Please Enter/Select Valid input", userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, (error, result) => {
+                    mm.sendMSG("Please Enter/Select Valid input", userMobileNo, phoneNumberId, permanentAccessToken, apiVersion,wpClientId, botId, userId,planId, (error, result) => {
                         if (error) {
                             console.log("Error in get method: ", error);
                             callbackFunction('Failed to send validation message');
@@ -651,7 +1022,7 @@ const textMessage = async (message, userMobileNo, phoneNumberId, permanentAccess
 }
 
 // if user reply from button
-const buttonMessage = async (redirectSelectedId, selectedOption, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, wpClientId, botId, userId, callbackFunction) => {
+const buttonMessage = async (redirectSelectedId, selectedOption, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, wpClientId, botId, userId,planId, callbackFunction) => {
     try {
         const userChatHistorys = await userChatHistory.findOne({ userMobileNo: userMobileNo, botId: botId, redirectId: redirectSelectedId }).sort({ _id: -1 }).limit(1)
         let redirectIdNew = userChatHistorys?.mainRedirectId ? userChatHistorys?.mainRedirectId : userChatHistorys?.redirectId
@@ -701,7 +1072,7 @@ const buttonMessage = async (redirectSelectedId, selectedOption, userMobileNo, p
                             if (!insertAdminChatHistory) {
                                 callbackFunction("Failed to Insert Admin chat history")
                             } else {
-                                mm.sendMSG(messageContent, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, (error, result) => {
+                                mm.sendMSG(messageContent, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion,wpClientId, botId, userId,planId, (error, result) => {
                                     if (error) {
                                         console.log("Error in get method: ", error);
                                         callbackFunction('Failed to send message');
@@ -736,447 +1107,7 @@ const buttonMessage = async (redirectSelectedId, selectedOption, userMobileNo, p
                             if (!insertAdminChatHistory) {
                                 callbackFunction("Failed to Insert Admin chat history")
                             } else {
-                                mm.sendMSGWithImage(mediaUrl, caption, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, (error, result) => {
-                                    if (error) {
-                                        console.log("Failed to send image message: ", error);
-                                        callbackFunction('Failed to send image message');
-                                    } else {
-                                        redirectId = scriptData.redirectId;
-                                        let waitTime = scriptData.waitTime;
-                                        if (waitTime !== null && waitTime > 0) {
-                                            setTimeout(processScript, waitTime);
-                                        } else {
-                                            callbackFunction(null, "Success");
-                                        }
-                                    }
-                                });
-                            }
-
-                        } else if (scriptData.messageType === "DOCUMENT") {
-                            let caption = scriptData.messageDraft,
-                                mediaUrl = scriptData.mediaUrl,
-                                filename = Date.now()
-                            const insertAdminChatHistory = await userChatHistory.create({
-                                botId: botId,
-                                userId: userId,
-                                userMobileNo: userMobileNo,
-                                sender: "A",
-                                messageContent: caption,
-                                mediaUrl: mediaUrl,
-                                messageDatetime: new Date(),
-                                mainRedirectId: null,
-                                redirectId: scriptData.redirectId,
-                                userInputSaveIn: scriptData.variableName,
-                                validationType: scriptData.validationType,
-                                prevRedirectId: scriptData.prevRedirectId,
-                            })
-                            if (!insertAdminChatHistory) {
-                                callbackFunction("Failed to Insert Admin chat history")
-                            } else {
-                                console.log("mediaUrl: ", mediaUrl);
-                                mm.sendDocumentMedia(caption, mediaUrl, filename, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, (error, result) => {
-                                    if (error) {
-                                        console.log("Failed to send Document message: ", error);
-                                        callbackFunction('Failed to send Document message');
-                                    } else {
-                                        redirectId = scriptData.redirectId;
-                                        let waitTime = scriptData.waitTime;
-                                        if (waitTime !== null && waitTime > 0) {
-                                            setTimeout(processScript, waitTime);
-                                        } else {
-                                            callbackFunction(null, "Success");
-                                        }
-                                    }
-                                });
-                            }
-                        } else if (scriptData.messageType === "BUTTON") {
-                            let messageContent = scriptData.messageDraft
-                            let manyInsertArray = []
-                            let listData = []
-                            let arrayData = scriptData.buttonOrListData
-                            if (arrayData.length > 0) {
-                                for (let i = 0; i < arrayData.length; i++) {
-                                    const element = arrayData[i];
-                                    const object = {
-                                        botId: botId,
-                                        userId: userId,
-                                        userMobileNo: userMobileNo,
-                                        sender: "A",
-                                        messageContent: element.optionName,
-                                        messageDatetime: new Date(),
-                                        mainRedirectId: element.id + "_" + (i + 1),
-                                        redirectId: element.id + "_" + (i + 1),
-                                        userInputSaveIn: scriptData.variableName,
-                                        validationType: scriptData.validationType,
-                                        prevRedirectId: scriptData.prevRedirectId,
-                                    }
-                                    manyInsertArray.push(object)
-                                    const listObject = {
-                                        id: element.id + "_" + (i + 1),
-                                        optionName: element.optionName
-                                    }
-                                    listData.push(listObject)
-                                }
-
-                                const insertAdminChatHistory = await userChatHistory.insertMany(manyInsertArray)
-                                if (!insertAdminChatHistory) {
-                                    callbackFunction("Failed to Insert Admin chat history")
-                                } else {
-                                    mm.sendInteractiveButtonMSG(messageContent, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, listData, (error, result) => {
-                                        if (error) {
-                                            console.log("Failed to send Button message: ", error);
-                                            callbackFunction('Failed to send Button message');
-                                        } else {
-                                            redirectId = scriptData.redirectId;
-                                            let waitTime = scriptData.waitTime;
-                                            if (waitTime !== null && waitTime > 0) {
-                                                setTimeout(processScript, waitTime);
-                                            } else {
-                                                callbackFunction(null, "Success");
-                                            }
-                                        }
-                                    });
-                                }
-                            } else {
-                                callbackFunction("Not Found buttonOrListData")
-                            }
-                        } else if (scriptData.messageType === "LIST") {
-                            let messageContent = scriptData.messageDraft,
-                                buttonText = scriptData.listButtonName,
-                                listData = [],
-                                manyInsertArray = [],
-                                arrayData = scriptData.buttonOrListData
-                            if (arrayData.length > 0) {
-                                for (let i = 0; i < arrayData.length; i++) {
-                                    const element = arrayData[i];
-                                    const object = {
-                                        botId: botId,
-                                        userId: userId,
-                                        userMobileNo: userMobileNo,
-                                        sender: "A",
-                                        messageContent: element.optionName,
-                                        messageDatetime: new Date(),
-                                        mainRedirectId: element.id + "_" + (i + 1),
-                                        redirectId: element.id + "_" + (i + 1),
-                                        userInputSaveIn: scriptData.variableName,
-                                        validationType: scriptData.validationType,
-                                        prevRedirectId: scriptData.prevRedirectId,
-                                    }
-                                    manyInsertArray.push(object)
-                                    const listObject = {
-                                        id: element.id + "_" + (i + 1),
-                                        optionName: element.optionName
-                                    }
-                                    listData.push(listObject)
-
-                                }
-
-                                console.log("listData: ", listData);
-                                const insertAdminChatHistory = await userChatHistory.insertMany(manyInsertArray)
-                                if (!insertAdminChatHistory) {
-                                    callbackFunction("Failed to Insert Admin chat history")
-                                } else {
-                                    mm.sendInteractiveListMSGNew(messageContent, buttonText, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, listData, (error, result) => {
-                                        if (error) {
-                                            console.log("Failed to send Button message: ", error);
-                                            callbackFunction('Failed to send Button message');
-                                        } else {
-                                            redirectId = scriptData.redirectId;
-                                            let waitTime = scriptData.waitTime;
-                                            if (waitTime !== null && waitTime > 0) {
-                                                setTimeout(processScript, waitTime);
-                                            } else {
-                                                callbackFunction(null, "Success");
-                                            }
-                                        }
-                                    });
-                                }
-
-
-                            } else {
-                                callbackFunction("Not Found buttonOrListData")
-                            }
-                        } else if (scriptData.messageType === "API_DATA") {
-                            let bodyParams = scriptData.bodyParams;
-                            let keys = []
-                            if (bodyParams) {
-                                Object.keys(bodyParams).forEach((key) => {
-                                    keys.push(bodyParams[key])
-                                })
-                            } else {
-                                keys.push("")
-                            }
-
-                            const resultInputData = await userInputData.find({ botId: botId, mobileNo: userMobileNo, variableName: { $in: keys } }).select({ selectedValue: 1, variableName: 1, _id: 0 })
-                            Object.keys(bodyParams).forEach((key) => {
-                                for (let i = 0; i < resultInputData.length; i++) {
-                                    const element = resultInputData[i];
-                                    if (bodyParams[key] === element.variableName) {
-                                        bodyParams[key] = element.selectedValue
-                                    }
-                                }
-                            })
-
-                            const newObject = {
-                                ...bodyParams,
-                                ...limitObject
-                            }
-                            const requestOptions = {
-                                url: scriptData.apiUrl,
-                                method: scriptData.method,
-                                headers: scriptData.headerParams,
-                                body: newObject,
-                                json: true
-                            }
-                            request(requestOptions, async (error, response, body) => {
-                                if (error) {
-                                    console.log("Error in request", error);
-                                    callbackFunction("Failed to Request API Data")
-                                } else {
-                                    if (response.statusCode === 200) {
-                                        let dataKey = scriptData.sampleDataKey.data,
-                                            dataId = scriptData.sampleDataKey.id,
-                                            dataName = scriptData.sampleDataKey.name,
-                                            dataDesc = scriptData.sampleDataKey.desc;
-                                        fileUrl = scriptData.sampleDataKey.fileUrl;
-                                        if (body[dataKey].length > 0) {
-                                            if (scriptData.messageSubType === "TEXT") {
-                                                let messageContent = scriptData.messageDraft
-                                                const keyData = await flattenCartData(body[dataKey], messageContent, dataName, dataId, "", "")
-                                                const insertAdminChatHistory = await userChatHistory.create({
-                                                    botId: botId,
-                                                    userId: userId,
-                                                    userMobileNo: userMobileNo,
-                                                    sender: "A",
-                                                    messageContent: keyData.stringValue,
-                                                    messageDatetime: new Date(),
-                                                    mainRedirectId: null,
-                                                    redirectId: scriptData.redirectId,
-                                                    userInputSaveIn: scriptData.variableName,
-                                                    validationType: scriptData.validationType,
-                                                    prevRedirectId: scriptData.prevRedirectId,
-                                                })
-                                                if (!insertAdminChatHistory) {
-                                                    callbackFunction("Failed to Insert Admin chat history")
-                                                } else {
-                                                    mm.sendMSG(keyData.stringValue, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, (error, result) => {
-                                                        if (error) {
-                                                            console.log("Error in get method: ", error);
-                                                            callbackFunction('Failed to send message');
-                                                        } else {
-                                                            redirectId = scriptData.redirectId;
-                                                            let waitTime = scriptData.waitTime;
-                                                            if (waitTime !== null && waitTime > 0) {
-                                                                setTimeout(processScript, waitTime);
-                                                            } else {
-                                                                callbackFunction(null, "Success");
-                                                            }
-                                                        }
-                                                    });
-                                                }
-                                            } else if (scriptData.messageSubType === "LIST") {
-                                                let messageContent = scriptData.messageDraft,
-                                                    buttonText = scriptData.listButtonName,
-                                                    listData = [],
-                                                    manyInsertArray = []
-                                                for (let i = 0; i < body[dataKey].length; i++) {
-                                                    const element = body[dataKey][i];
-
-                                                    const object = {
-                                                        botId: botId,
-                                                        userId: userId,
-                                                        userMobileNo: userMobileNo,
-                                                        sender: "A",
-                                                        messageContent: element[dataName],
-                                                        messageDatetime: new Date(),
-                                                        mainRedirectId: scriptData.redirectId + "_" + (i + 1),
-                                                        redirectId: scriptData.redirectId + "_" + (i + 1),
-                                                        userInputSaveIn: scriptData.variableName,
-                                                        validationType: scriptData.validationType,
-                                                        prevRedirectId: scriptData.prevRedirectId,
-                                                    }
-                                                    manyInsertArray.push(object)
-                                                    const listObject = {
-                                                        id: scriptData.redirectId + "_" + (i + 1),
-                                                        optionName: element[dataName],
-                                                        desc: element[fileUrl]
-                                                    }
-                                                    listData.push(listObject)
-                                                }
-
-                                                const insertAdminChatHistory = await userChatHistory.insertMany(manyInsertArray)
-                                                if (!insertAdminChatHistory) {
-                                                    callbackFunction("Failed to Insert Admin chat history")
-                                                } else {
-                                                    mm.sendInteractiveListMSGNew(messageContent, buttonText, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, listData, (error, result) => {
-                                                        if (error) {
-                                                            console.log("Failed to send Button message: ", error);
-                                                            callbackFunction('Failed to send Button message');
-                                                        } else {
-                                                            redirectId = scriptData.redirectId;
-                                                            let waitTime = scriptData.waitTime;
-                                                            if (waitTime !== null && waitTime > 0) {
-                                                                setTimeout(processScript, waitTime);
-                                                            } else {
-                                                                callbackFunction(null, "Success");
-                                                            }
-                                                        }
-                                                    });
-                                                }
-                                            } else if (scriptData.messageSubType === "DOCUMENT") {
-
-                                                const keyData = await flattenCartData(body[dataKey], scriptData.messageDraft, dataName, dataId, fileUrl, "")
-
-
-                                                let caption = keyData.stringValue,
-                                                    mediaUrl = keyData.fileUrlValue,
-                                                    filename = Date.now()
-                                                const insertAdminChatHistory = await userChatHistory.create({
-                                                    botId: botId,
-                                                    userId: userId,
-                                                    userMobileNo: userMobileNo,
-                                                    sender: "A",
-                                                    messageContent: caption,
-                                                    mediaUrl: mediaUrl,
-                                                    messageDatetime: new Date(),
-                                                    mainRedirectId: scriptData.redirectId,
-                                                    redirectId: scriptData.redirectId,
-                                                    userInputSaveIn: scriptData.variableName,
-                                                    validationType: scriptData.validationType,
-                                                    prevRedirectId: scriptData.prevRedirectId,
-                                                })
-                                                if (!insertAdminChatHistory) {
-                                                    callbackFunction("Failed to Insert Admin chat history")
-                                                } else {
-                                                    mm.sendDocumentMedia(caption, mediaUrl, filename, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, (error, result) => {
-                                                        if (error) {
-                                                            console.log("Failed to send Document message: ", error);
-                                                            callbackFunction('Failed to send Document message');
-                                                        } else {
-                                                            redirectId = scriptData.redirectId;
-                                                            let waitTime = scriptData.waitTime;
-                                                            if (waitTime !== null && waitTime > 0) {
-                                                                setTimeout(processScript, waitTime);
-                                                            } else {
-                                                                callbackFunction(null, "Success");
-                                                            }
-                                                        }
-                                                    });
-                                                }
-                                            } else {
-                                                callbackFunction("messageSubType not matched")
-                                            }
-                                        } else {
-                                            callbackFunction("No Data Found")
-                                        }
-
-                                    } else {
-                                        callbackFunction("Failed to send API Data")
-                                    }
-                                }
-                            })
-                        } else {
-                            callbackFunction("messageType not matched")
-                        }
-                    }
-                }
-                processScript()
-            }
-        }
-    } catch (error) {
-        console.log(error);
-        callbackFunction("Something went wrong in Button Function" + error);
-    }
-}
-
-// if user reply from list message
-const ListMessage = async (redirectSelectedId, selectedOption, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, wpClientId, botId, userId, callbackFunction) => {
-    try {
-        const userChatHistorys = await userChatHistory.findOne({ userMobileNo: userMobileNo, botId: botId, redirectId: redirectSelectedId }).sort({ _id: -1 }).limit(1)
-        let redirectIdNew = userChatHistorys?.mainRedirectId ? userChatHistorys?.mainRedirectId : userChatHistorys?.redirectId
-        if (USER_INPUT != 0 || USER_INPUT != "#") {
-            if (userChatHistorys?.userInputSaveIn) {
-                const insertUserInputData = await userInputData.findOneAndUpdate({ botId: botId, mobileNo: userMobileNo, variableName: userChatHistorys?.userInputSaveIn }, { selectedValue: selectedOption }, { upsert: true }, { new: true })
-            }
-        }
-        const insertUserChatHistory = await userChatHistory.create({
-            botId: botId,
-            userId: userId,
-            userMobileNo: userMobileNo,
-            sender: "U",
-            messageContent: selectedOption,
-            messageDatetime: new Date(),
-            mainRedirectId: null,
-            redirectId: redirectIdNew,
-            prevRedirectId: redirectIdNew,
-        })
-
-        if (!insertUserChatHistory) {
-            callbackFunction('Failed to Insert In Chat History');
-        } else {
-            let redirectId = redirectIdNew?.split("_")[0];
-            if (redirectId === "000000000000000000000000") {
-                callbackFunction("Chatbot script not found")
-            } else {
-                async function processScript() {
-                    const scriptData = await chatBotScript.findById(redirectId)
-                    if (!scriptData) {
-                        callbackFunction("Chat script not found")
-                    } else {
-                        if (scriptData.messageType === "TEXT") {
-                            let messageContent = scriptData.messageDraft
-                            const insertAdminChatHistory = await userChatHistory.create({
-                                botId: botId,
-                                userId: userId,
-                                userMobileNo: userMobileNo,
-                                sender: "A",
-                                messageContent: messageContent,
-                                messageDatetime: new Date(),
-                                mainRedirectId: null,
-                                redirectId: scriptData.redirectId,
-                                userInputSaveIn: scriptData.variableName,
-                                validationType: scriptData.validationType,
-                                prevRedirectId: scriptData.prevRedirectId,
-                            })
-                            if (!insertAdminChatHistory) {
-                                callbackFunction("Failed to Insert Admin chat history")
-                            } else {
-                                mm.sendMSG(messageContent, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, (error, result) => {
-                                    if (error) {
-                                        console.log("Error in get method: ", error);
-                                        callbackFunction('Failed to send message');
-                                    } else {
-                                        redirectId = scriptData.redirectId;
-                                        let waitTime = scriptData.waitTime;
-                                        if (waitTime !== null && waitTime > 0) {
-                                            setTimeout(processScript, waitTime);
-                                        } else {
-                                            callbackFunction(null, "Success");
-                                        }
-                                    }
-                                });
-                            }
-                        } else if (scriptData.messageType === "IMAGE") {
-                            let caption = scriptData.messageDraft,
-                                mediaUrl = scriptData.mediaUrl
-                            const insertAdminChatHistory = await userChatHistory.create({
-                                botId: botId,
-                                userId: userId,
-                                userMobileNo: userMobileNo,
-                                sender: "A",
-                                messageContent: caption,
-                                mediaUrl: mediaUrl,
-                                messageDatetime: new Date(),
-                                mainRedirectId: null,
-                                redirectId: scriptData.redirectId,
-                                userInputSaveIn: scriptData.variableName,
-                                validationType: scriptData.validationType,
-                                prevRedirectId: scriptData.prevRedirectId,
-                            })
-                            if (!insertAdminChatHistory) {
-                                callbackFunction("Failed to Insert Admin chat history")
-                            } else {
-                                mm.sendMSGWithImage(mediaUrl, caption, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, (error, result) => {
+                                mm.sendMSGWithImage(mediaUrl, caption, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion,wpClientId, botId, userId,planId, (error, result) => {
                                     if (error) {
                                         console.log("Failed to send image message: ", error);
                                         callbackFunction('Failed to send image message');
@@ -1214,7 +1145,7 @@ const ListMessage = async (redirectSelectedId, selectedOption, userMobileNo, pho
                             if (!insertAdminChatHistory) {
                                 callbackFunction("Failed to Insert Admin chat history")
                             } else {
-                                mm.sendDocumentMedia(caption, mediaUrl, filename, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, (error, result) => {
+                                mm.sendDocumentMedia(caption, mediaUrl, filename, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion,wpClientId, botId, userId,planId, (error, result) => {
                                     if (error) {
                                         console.log("Failed to send Document message: ", error);
                                         callbackFunction('Failed to send Document message');
@@ -1262,7 +1193,7 @@ const ListMessage = async (redirectSelectedId, selectedOption, userMobileNo, pho
                                 if (!insertAdminChatHistory) {
                                     callbackFunction("Failed to Insert Admin chat history")
                                 } else {
-                                    mm.sendInteractiveButtonMSG(messageContent, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, listData, (error, result) => {
+                                    mm.sendInteractiveButtonMSG(messageContent, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, listData,wpClientId, botId, userId,planId, (error, result) => {
                                         if (error) {
                                             console.log("Failed to send Button message: ", error);
                                             callbackFunction('Failed to send Button message');
@@ -1317,7 +1248,7 @@ const ListMessage = async (redirectSelectedId, selectedOption, userMobileNo, pho
                                     callbackFunction("Failed to Insert Admin chat history")
                                 }
 
-                                mm.sendInteractiveListMSGNew(messageContent, buttonText, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, listData, (error, result) => {
+                                mm.sendInteractiveListMSGNew(messageContent, buttonText, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, listData,wpClientId, botId, userId,planId, (error, result) => {
                                     if (error) {
                                         console.log("Failed to send Button message: ", error);
                                         callbackFunction('Failed to send Button message');
@@ -1397,7 +1328,7 @@ const ListMessage = async (redirectSelectedId, selectedOption, userMobileNo, pho
                                                 if (!insertAdminChatHistory) {
                                                     callbackFunction("Failed to Insert Admin chat history")
                                                 } else {
-                                                    mm.sendMSG(keyData.stringValue, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, (error, result) => {
+                                                    mm.sendMSG(keyData.stringValue, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion,wpClientId, botId, userId,planId, (error, result) => {
                                                         if (error) {
                                                             console.log("Error in get method: ", error);
                                                             callbackFunction('Failed to send message');
@@ -1446,7 +1377,7 @@ const ListMessage = async (redirectSelectedId, selectedOption, userMobileNo, pho
                                                 if (!insertAdminChatHistory) {
                                                     callbackFunction("Failed to Insert Admin chat history")
                                                 } else {
-                                                    mm.sendInteractiveListMSGNew(messageContent, buttonText, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, listData, (error, result) => {
+                                                    mm.sendInteractiveListMSGNew(messageContent, buttonText, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, listData,wpClientId, botId, userId,planId, (error, result) => {
                                                         if (error) {
                                                             console.log("Failed to send Button message: ", error);
                                                             callbackFunction('Failed to send Button message');
@@ -1487,7 +1418,448 @@ const ListMessage = async (redirectSelectedId, selectedOption, userMobileNo, pho
                                                 if (!insertAdminChatHistory) {
                                                     callbackFunction("Failed to Insert Admin chat history")
                                                 } else {
-                                                    mm.sendDocumentMedia(caption, mediaUrl, filename, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, (error, result) => {
+                                                    mm.sendDocumentMedia(caption, mediaUrl, filename, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion,wpClientId, botId, userId,planId, (error, result) => {
+                                                        if (error) {
+                                                            console.log("Failed to send Document message: ", error);
+                                                            callbackFunction('Failed to send Document message');
+                                                        } else {
+                                                            redirectId = scriptData.redirectId;
+                                                            let waitTime = scriptData.waitTime;
+                                                            if (waitTime !== null && waitTime > 0) {
+                                                                setTimeout(processScript, waitTime);
+                                                            } else {
+                                                                callbackFunction(null, "Success");
+                                                            }
+                                                        }
+                                                    });
+                                                }
+                                            } else {
+                                                callbackFunction("messageSubType not matched")
+                                            }
+                                        } else {
+                                            callbackFunction("No Data Found")
+                                        }
+
+                                    } else {
+                                        callbackFunction("Failed to send API Data")
+                                    }
+                                }
+                            })
+                        } else {
+                            callbackFunction("messageType not matched")
+                        }
+                    }
+
+                }
+
+                processScript()
+            }
+        }
+    } catch (error) {
+        console.log(error);
+        callbackFunction("Something went wrong in Button Function" + error);
+    }
+}
+
+// if user reply from list message
+const ListMessage = async (redirectSelectedId, selectedOption, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, wpClientId, botId, userId,planId,  callbackFunction) => {
+    try {
+        const userChatHistorys = await userChatHistory.findOne({ userMobileNo: userMobileNo, botId: botId, redirectId: redirectSelectedId }).sort({ _id: -1 }).limit(1)
+        let redirectIdNew = userChatHistorys?.mainRedirectId ? userChatHistorys?.mainRedirectId : userChatHistorys?.redirectId
+        if (USER_INPUT != 0 || USER_INPUT != "#") {
+            if (userChatHistorys?.userInputSaveIn) {
+                const insertUserInputData = await userInputData.findOneAndUpdate({ botId: botId, mobileNo: userMobileNo, variableName: userChatHistorys?.userInputSaveIn }, { selectedValue: selectedOption }, { upsert: true }, { new: true })
+            }
+        }
+        const insertUserChatHistory = await userChatHistory.create({
+            botId: botId,
+            userId: userId,
+            userMobileNo: userMobileNo,
+            sender: "U",
+            messageContent: selectedOption,
+            messageDatetime: new Date(),
+            mainRedirectId: null,
+            redirectId: redirectIdNew,
+            prevRedirectId: redirectIdNew,
+        })
+
+        if (!insertUserChatHistory) {
+            callbackFunction('Failed to Insert In Chat History');
+        } else {
+            let redirectId = redirectIdNew?.split("_")[0];
+            if (redirectId === "000000000000000000000000") {
+                callbackFunction("Chatbot script not found")
+            } else {
+                async function processScript() {
+                    const scriptData = await chatBotScript.findById(redirectId)
+                    if (!scriptData) {
+                        callbackFunction("Chat script not found")
+                    } else {
+                        if (scriptData.messageType === "TEXT") {
+                            let messageContent = scriptData.messageDraft
+                            const insertAdminChatHistory = await userChatHistory.create({
+                                botId: botId,
+                                userId: userId,
+                                userMobileNo: userMobileNo,
+                                sender: "A",
+                                messageContent: messageContent,
+                                messageDatetime: new Date(),
+                                mainRedirectId: null,
+                                redirectId: scriptData.redirectId,
+                                userInputSaveIn: scriptData.variableName,
+                                validationType: scriptData.validationType,
+                                prevRedirectId: scriptData.prevRedirectId,
+                            })
+                            if (!insertAdminChatHistory) {
+                                callbackFunction("Failed to Insert Admin chat history")
+                            } else {
+                                mm.sendMSG(messageContent, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion,wpClientId, botId, userId,planId, (error, result) => {
+                                    if (error) {
+                                        console.log("Error in get method: ", error);
+                                        callbackFunction('Failed to send message');
+                                    } else {
+                                        redirectId = scriptData.redirectId;
+                                        let waitTime = scriptData.waitTime;
+                                        if (waitTime !== null && waitTime > 0) {
+                                            setTimeout(processScript, waitTime);
+                                        } else {
+                                            callbackFunction(null, "Success");
+                                        }
+                                    }
+                                });
+                            }
+                        } else if (scriptData.messageType === "IMAGE") {
+                            let caption = scriptData.messageDraft,
+                                mediaUrl = scriptData.mediaUrl
+                            const insertAdminChatHistory = await userChatHistory.create({
+                                botId: botId,
+                                userId: userId,
+                                userMobileNo: userMobileNo,
+                                sender: "A",
+                                messageContent: caption,
+                                mediaUrl: mediaUrl,
+                                messageDatetime: new Date(),
+                                mainRedirectId: null,
+                                redirectId: scriptData.redirectId,
+                                userInputSaveIn: scriptData.variableName,
+                                validationType: scriptData.validationType,
+                                prevRedirectId: scriptData.prevRedirectId,
+                            })
+                            if (!insertAdminChatHistory) {
+                                callbackFunction("Failed to Insert Admin chat history")
+                            } else {
+                                mm.sendMSGWithImage(mediaUrl, caption, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion,wpClientId, botId, userId,planId, (error, result) => {
+                                    if (error) {
+                                        console.log("Failed to send image message: ", error);
+                                        callbackFunction('Failed to send image message');
+                                    } else {
+                                        redirectId = scriptData.redirectId;
+                                        let waitTime = scriptData.waitTime;
+                                        if (waitTime !== null && waitTime > 0) {
+                                            setTimeout(processScript, waitTime);
+                                        } else {
+                                            callbackFunction(null, "Success");
+                                        }
+                                    }
+                                });
+                            }
+
+
+                        } else if (scriptData.messageType === "DOCUMENT") {
+                            let caption = scriptData.messageDraft,
+                                mediaUrl = scriptData.mediaUrl,
+                                filename = Date.now()
+                            const insertAdminChatHistory = await userChatHistory.create({
+                                botId: botId,
+                                userId: userId,
+                                userMobileNo: userMobileNo,
+                                sender: "A",
+                                messageContent: caption,
+                                mediaUrl: mediaUrl,
+                                messageDatetime: new Date(),
+                                mainRedirectId: scriptData.redirectId,
+                                redirectId: scriptData.redirectId,
+                                userInputSaveIn: scriptData.variableName,
+                                validationType: scriptData.validationType,
+                                prevRedirectId: scriptData.prevRedirectId,
+                            })
+                            if (!insertAdminChatHistory) {
+                                callbackFunction("Failed to Insert Admin chat history")
+                            } else {
+                                mm.sendDocumentMedia(caption, mediaUrl, filename, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion,wpClientId, botId, userId,planId, (error, result) => {
+                                    if (error) {
+                                        console.log("Failed to send Document message: ", error);
+                                        callbackFunction('Failed to send Document message');
+                                    } else {
+                                        redirectId = scriptData.redirectId;
+                                        let waitTime = scriptData.waitTime;
+                                        if (waitTime !== null && waitTime > 0) {
+                                            setTimeout(processScript, waitTime);
+                                        } else {
+                                            callbackFunction(null, "Success");
+                                        }
+                                    }
+                                });
+                            }
+                        } else if (scriptData.messageType === "BUTTON") {
+                            let messageContent = scriptData.messageDraft
+                            let manyInsertArray = []
+                            let listData = []
+                            let arrayData = scriptData.buttonOrListData
+                            if (arrayData.length > 0) {
+                                for (let i = 0; i < arrayData.length; i++) {
+                                    const element = arrayData[i];
+                                    const object = {
+                                        botId: botId,
+                                        userId: userId,
+                                        userMobileNo: userMobileNo,
+                                        sender: "A",
+                                        messageContent: element.optionName,
+                                        messageDatetime: new Date(),
+                                        mainRedirectId: element.id + "_" + (i + 1),
+                                        redirectId: element.id + "_" + (i + 1),
+                                        userInputSaveIn: scriptData.variableName,
+                                        validationType: scriptData.validationType,
+                                        prevRedirectId: scriptData.prevRedirectId,
+                                    }
+                                    manyInsertArray.push(object)
+                                    const listObject = {
+                                        id: element.id + "_" + (i + 1),
+                                        optionName: element.optionName
+                                    }
+                                    listData.push(listObject)
+                                }
+
+                                const insertAdminChatHistory = await userChatHistory.insertMany(manyInsertArray)
+                                if (!insertAdminChatHistory) {
+                                    callbackFunction("Failed to Insert Admin chat history")
+                                } else {
+                                    mm.sendInteractiveButtonMSG(messageContent, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, listData,wpClientId, botId, userId,planId, (error, result) => {
+                                        if (error) {
+                                            console.log("Failed to send Button message: ", error);
+                                            callbackFunction('Failed to send Button message');
+                                        } else {
+                                            redirectId = scriptData.redirectId;
+                                            let waitTime = scriptData.waitTime;
+                                            if (waitTime !== null && waitTime > 0) {
+                                                setTimeout(processScript, waitTime);
+                                            } else {
+                                                callbackFunction(null, "Success");
+                                            }
+                                        }
+                                    });
+                                }
+                            } else {
+                                callbackFunction("Not Found buttonOrListData")
+                            }
+                        } else if (scriptData.messageType === "LIST") {
+                            let messageContent = scriptData.messageDraft,
+                                buttonText = scriptData.listButtonName,
+                                listData = [],
+                                manyInsertArray = [],
+                                arrayData = scriptData.buttonOrListData
+                            if (arrayData.length > 0) {
+                                for (let i = 0; i < arrayData.length; i++) {
+                                    const element = arrayData[i];
+                                    const object = {
+                                        botId: botId,
+                                        userId: userId,
+                                        userMobileNo: userMobileNo,
+                                        sender: "A",
+                                        messageContent: element.optionName,
+                                        messageDatetime: new Date(),
+                                        mainRedirectId: element.id + "_" + (i + 1),
+                                        redirectId: element.id + "_" + (i + 1),
+                                        userInputSaveIn: scriptData.variableName,
+                                        validationType: scriptData.validationType,
+                                        prevRedirectId: scriptData.prevRedirectId,
+                                    }
+                                    manyInsertArray.push(object)
+                                    const listObject = {
+                                        id: element.id + "_" + (i + 1),
+                                        optionName: element.optionName
+                                    }
+                                    listData.push(listObject)
+
+                                }
+
+                                console.log("listData: ", listData);
+                                const insertAdminChatHistory = await userChatHistory.insertMany(manyInsertArray)
+                                if (!insertAdminChatHistory) {
+                                    callbackFunction("Failed to Insert Admin chat history")
+                                }
+
+                                mm.sendInteractiveListMSGNew(messageContent, buttonText, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, listData,wpClientId, botId, userId,planId, (error, result) => {
+                                    if (error) {
+                                        console.log("Failed to send Button message: ", error);
+                                        callbackFunction('Failed to send Button message');
+                                    } else {
+                                        redirectId = scriptData.redirectId;
+                                        let waitTime = scriptData.waitTime;
+                                        if (waitTime !== null && waitTime > 0) {
+                                            setTimeout(processScript, waitTime);
+                                        } else {
+                                            callbackFunction(null, "Success");
+                                        }
+                                    }
+                                });
+                            } else {
+                                callbackFunction("Not Found buttonOrListData")
+                            }
+                        } else if (scriptData.messageType === "API_DATA") {
+                            let bodyParams = scriptData.bodyParams;
+                            let keys = []
+                            if (bodyParams) {
+                                Object.keys(bodyParams).forEach((key) => {
+                                    keys.push(bodyParams[key])
+                                })
+                            } else {
+                                keys.push("")
+                            }
+
+                            const resultInputData = await userInputData.find({ botId: botId, mobileNo: userMobileNo, variableName: { $in: keys } }).select({ selectedValue: 1, variableName: 1, _id: 0 })
+                            Object.keys(bodyParams).forEach((key) => {
+                                for (let i = 0; i < resultInputData.length; i++) {
+                                    const element = resultInputData[i];
+                                    if (bodyParams[key] === element.variableName) {
+                                        bodyParams[key] = element.selectedValue
+                                    }
+                                }
+                            })
+
+                            const newObject = {
+                                ...bodyParams,
+                                ...limitObject
+                            }
+                            const requestOptions = {
+                                url: scriptData.apiUrl,
+                                method: scriptData.method,
+                                headers: scriptData.headerParams,
+                                body: newObject,
+                                json: true
+                            }
+                            request(requestOptions, async (error, response, body) => {
+                                if (error) {
+                                    console.log("Error in request", error);
+                                    callbackFunction("Failed to Request API Data")
+                                } else {
+                                    if (response.statusCode === 200) {
+                                        let dataKey = scriptData?.sampleDataKey?.data,
+                                            dataId = scriptData?.sampleDataKey?.id,
+                                            dataName = scriptData?.sampleDataKey?.name,
+                                            dataDesc = scriptData?.sampleDataKey?.desc;
+                                        fileUrl = scriptData?.sampleDataKey?.fileUrl;
+                                        if (body[dataKey].length > 0) {
+                                            if (scriptData.messageSubType === "TEXT") {
+                                                let messageContent = scriptData.messageDraft
+                                                const keyData = await flattenCartData(body[dataKey], messageContent, dataName, dataId, "", "")
+                                                const insertAdminChatHistory = await userChatHistory.create({
+                                                    botId: botId,
+                                                    userId: userId,
+                                                    userMobileNo: userMobileNo,
+                                                    sender: "A",
+                                                    messageContent: keyData.stringValue,
+                                                    messageDatetime: new Date(),
+                                                    mainRedirectId: null,
+                                                    redirectId: scriptData.redirectId,
+                                                    userInputSaveIn: scriptData.variableName,
+                                                    validationType: scriptData.validationType,
+                                                    prevRedirectId: scriptData.prevRedirectId,
+                                                })
+                                                if (!insertAdminChatHistory) {
+                                                    callbackFunction("Failed to Insert Admin chat history")
+                                                } else {
+                                                    mm.sendMSG(keyData.stringValue, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion,wpClientId, botId, userId,planId, (error, result) => {
+                                                        if (error) {
+                                                            console.log("Error in get method: ", error);
+                                                            callbackFunction('Failed to send message');
+                                                        } else {
+                                                            redirectId = scriptData.redirectId;
+                                                            let waitTime = scriptData.waitTime;
+                                                            if (waitTime !== null && waitTime > 0) {
+                                                                setTimeout(processScript, waitTime);
+                                                            } else {
+                                                                callbackFunction(null, "Success");
+                                                            }
+                                                        }
+                                                    });
+                                                }
+                                            } else if (scriptData.messageSubType === "LIST") {
+                                                let messageContent = scriptData.messageDraft,
+                                                    buttonText = scriptData.listButtonName,
+                                                    listData = [],
+                                                    manyInsertArray = []
+                                                for (let i = 0; i < body[dataKey].length; i++) {
+                                                    const element = body[dataKey][i];
+
+                                                    const object = {
+                                                        botId: botId,
+                                                        userId: userId,
+                                                        userMobileNo: userMobileNo,
+                                                        sender: "A",
+                                                        messageContent: element[dataName],
+                                                        messageDatetime: new Date(),
+                                                        mainRedirectId: scriptData.redirectId + "_" + (i + 1),
+                                                        redirectId: scriptData.redirectId + "_" + (i + 1),
+                                                        userInputSaveIn: scriptData.variableName,
+                                                        validationType: scriptData.validationType,
+                                                        prevRedirectId: scriptData.prevRedirectId,
+                                                    }
+                                                    manyInsertArray.push(object)
+                                                    const listObject = {
+                                                        id: scriptData.redirectId + "_" + (i + 1),
+                                                        optionName: element[dataName],
+                                                        desc: element[dataDesc]
+                                                    }
+                                                    listData.push(listObject)
+                                                }
+
+                                                const insertAdminChatHistory = await userChatHistory.insertMany(manyInsertArray)
+                                                if (!insertAdminChatHistory) {
+                                                    callbackFunction("Failed to Insert Admin chat history")
+                                                } else {
+                                                    mm.sendInteractiveListMSGNew(messageContent, buttonText, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, listData,wpClientId, botId, userId,planId, (error, result) => {
+                                                        if (error) {
+                                                            console.log("Failed to send Button message: ", error);
+                                                            callbackFunction('Failed to send Button message');
+                                                        } else {
+                                                            redirectId = scriptData.redirectId;
+                                                            let waitTime = scriptData.waitTime;
+                                                            if (waitTime !== null && waitTime > 0) {
+                                                                setTimeout(processScript, waitTime);
+                                                            } else {
+                                                                callbackFunction(null, "Success");
+                                                            }
+                                                        }
+                                                    });
+                                                }
+                                            } else if (scriptData.messageSubType === "DOCUMENT") {
+
+                                                const keyData = await flattenCartData(body[dataKey], scriptData.messageDraft, dataName, dataId, fileUrl, "")
+
+
+                                                console.log("keyData", keyData);
+                                                let caption = keyData.stringValue,
+                                                    mediaUrl = keyData.fileUrlValue,
+                                                    filename = Date.now()
+                                                const insertAdminChatHistory = await userChatHistory.create({
+                                                    botId: botId,
+                                                    userId: userId,
+                                                    userMobileNo: userMobileNo,
+                                                    sender: "A",
+                                                    messageContent: caption,
+                                                    mediaUrl: mediaUrl,
+                                                    messageDatetime: new Date(),
+                                                    mainRedirectId: scriptData.redirectId,
+                                                    redirectId: scriptData.redirectId,
+                                                    userInputSaveIn: scriptData.variableName,
+                                                    validationType: scriptData.validationType,
+                                                    prevRedirectId: scriptData.prevRedirectId,
+                                                })
+                                                if (!insertAdminChatHistory) {
+                                                    callbackFunction("Failed to Insert Admin chat history")
+                                                } else {
+                                                    mm.sendDocumentMedia(caption, mediaUrl, filename, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion,wpClientId, botId, userId,planId, (error, result) => {
                                                         if (error) {
                                                             console.log("Failed to send Document message: ", error);
                                                             callbackFunction('Failed to send Document message');
@@ -1727,7 +2099,7 @@ const restartMessage = async (restartId, errorMessage, from, phoneNumberId, perm
                             callbackFunction("Failed to Insert Admin chat history")
                         }
 
-                        mm.sendInteractiveListMSGNew(messageContent, buttonText, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, listData, (error, result) => {
+                        mm.sendInteractiveListMSGNew(messageContent, buttonText, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, listData,wpClientId, botId, userId,planId, (error, result) => {
                             if (error) {
                                 console.log("Failed to send Button message: ", error);
                                 callbackFunction('Failed to send Button message');
@@ -1758,7 +2130,7 @@ const restartMessage = async (restartId, errorMessage, from, phoneNumberId, perm
 }
 
 // if user reply go back (Not in use)
-const backMessage = async (message, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, wpClientId, botId, userId, triggerMsg, callbackFunction) => {
+const backMessage = async (message, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, wpClientId, botId, userId, triggerMsg,planId,  callbackFunction) => {
     try {
         const userChatHistorys = await userChatHistory.findOne({ userMobileNo: userMobileNo, botId: botId, sender: "A" }).sort({ _id: -1 }).limit(1)
         if (userChatHistorys) {
@@ -1812,7 +2184,7 @@ const backMessage = async (message, userMobileNo, phoneNumberId, permanentAccess
                                 if (!insertAdminChatHistory) {
                                     callbackFunction("Failed to Insert Admin chat history")
                                 } else {
-                                    mm.sendMSG(messageContent, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, (error, result) => {
+                                    mm.sendMSG(messageContent, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion,wpClientId, botId, userId,planId, (error, result) => {
                                         if (error) {
                                             console.log("Error in get method: ", error);
                                             callbackFunction('Failed to send message');
@@ -1847,7 +2219,7 @@ const backMessage = async (message, userMobileNo, phoneNumberId, permanentAccess
                                 if (!insertAdminChatHistory) {
                                     callbackFunction("Failed to Insert Admin chat history")
                                 } else {
-                                    mm.sendMSGWithImage(mediaUrl, caption, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, (error, result) => {
+                                    mm.sendMSGWithImage(mediaUrl, caption, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion,wpClientId, botId, userId,planId, (error, result) => {
                                         if (error) {
                                             console.log("Failed to send image message: ", error);
                                             callbackFunction('Failed to send image message');
@@ -1862,8 +2234,8 @@ const backMessage = async (message, userMobileNo, phoneNumberId, permanentAccess
                                         }
                                     });
                                 }
-
-
+    
+    
                             } else if (scriptData.messageType === "DOCUMENT") {
                                 let caption = scriptData.messageDraft,
                                     mediaUrl = scriptData.mediaUrl,
@@ -1876,7 +2248,7 @@ const backMessage = async (message, userMobileNo, phoneNumberId, permanentAccess
                                     messageContent: caption,
                                     mediaUrl: mediaUrl,
                                     messageDatetime: new Date(),
-                                    mainRedirectId: null,
+                                    mainRedirectId: scriptData.redirectId,
                                     redirectId: scriptData.redirectId,
                                     userInputSaveIn: scriptData.variableName,
                                     validationType: scriptData.validationType,
@@ -1885,7 +2257,7 @@ const backMessage = async (message, userMobileNo, phoneNumberId, permanentAccess
                                 if (!insertAdminChatHistory) {
                                     callbackFunction("Failed to Insert Admin chat history")
                                 } else {
-                                    mm.sendDocumentMedia(caption, mediaUrl, filename, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, (error, result) => {
+                                    mm.sendDocumentMedia(caption, mediaUrl, filename, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion,wpClientId, botId, userId,planId, (error, result) => {
                                         if (error) {
                                             console.log("Failed to send Document message: ", error);
                                             callbackFunction('Failed to send Document message');
@@ -1928,12 +2300,12 @@ const backMessage = async (message, userMobileNo, phoneNumberId, permanentAccess
                                         }
                                         listData.push(listObject)
                                     }
-
+    
                                     const insertAdminChatHistory = await userChatHistory.insertMany(manyInsertArray)
                                     if (!insertAdminChatHistory) {
                                         callbackFunction("Failed to Insert Admin chat history")
                                     } else {
-                                        mm.sendInteractiveButtonMSG(messageContent, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, listData, (error, result) => {
+                                        mm.sendInteractiveButtonMSG(messageContent, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, listData,wpClientId, botId, userId,planId, (error, result) => {
                                             if (error) {
                                                 console.log("Failed to send Button message: ", error);
                                                 callbackFunction('Failed to send Button message');
@@ -1979,16 +2351,16 @@ const backMessage = async (message, userMobileNo, phoneNumberId, permanentAccess
                                             optionName: element.optionName
                                         }
                                         listData.push(listObject)
-
+    
                                     }
-
+    
                                     console.log("listData: ", listData);
                                     const insertAdminChatHistory = await userChatHistory.insertMany(manyInsertArray)
                                     if (!insertAdminChatHistory) {
                                         callbackFunction("Failed to Insert Admin chat history")
                                     }
-
-                                    mm.sendInteractiveListMSGNew(messageContent, buttonText, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, listData, (error, result) => {
+    
+                                    mm.sendInteractiveListMSGNew(messageContent, buttonText, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, listData,wpClientId, botId, userId,planId, (error, result) => {
                                         if (error) {
                                             console.log("Failed to send Button message: ", error);
                                             callbackFunction('Failed to send Button message');
@@ -2005,11 +2377,191 @@ const backMessage = async (message, userMobileNo, phoneNumberId, permanentAccess
                                 } else {
                                     callbackFunction("Not Found buttonOrListData")
                                 }
+                            } else if (scriptData.messageType === "API_DATA") {
+                                let bodyParams = scriptData.bodyParams;
+                                let keys = []
+                                if (bodyParams) {
+                                    Object.keys(bodyParams).forEach((key) => {
+                                        keys.push(bodyParams[key])
+                                    })
+                                } else {
+                                    keys.push("")
+                                }
+    
+                                const resultInputData = await userInputData.find({ botId: botId, mobileNo: userMobileNo, variableName: { $in: keys } }).select({ selectedValue: 1, variableName: 1, _id: 0 })
+                                Object.keys(bodyParams).forEach((key) => {
+                                    for (let i = 0; i < resultInputData.length; i++) {
+                                        const element = resultInputData[i];
+                                        if (bodyParams[key] === element.variableName) {
+                                            bodyParams[key] = element.selectedValue
+                                        }
+                                    }
+                                })
+    
+                                const newObject = {
+                                    ...bodyParams,
+                                    ...limitObject
+                                }
+                                const requestOptions = {
+                                    url: scriptData.apiUrl,
+                                    method: scriptData.method,
+                                    headers: scriptData.headerParams,
+                                    body: newObject,
+                                    json: true
+                                }
+                                request(requestOptions, async (error, response, body) => {
+                                    if (error) {
+                                        console.log("Error in request", error);
+                                        callbackFunction("Failed to Request API Data")
+                                    } else {
+                                        if (response.statusCode === 200) {
+                                            let dataKey = scriptData?.sampleDataKey?.data,
+                                                dataId = scriptData?.sampleDataKey?.id,
+                                                dataName = scriptData?.sampleDataKey?.name,
+                                                dataDesc = scriptData?.sampleDataKey?.desc;
+                                            fileUrl = scriptData?.sampleDataKey?.fileUrl;
+                                            if (body[dataKey].length > 0) {
+                                                if (scriptData.messageSubType === "TEXT") {
+                                                    let messageContent = scriptData.messageDraft
+                                                    const keyData = await flattenCartData(body[dataKey], messageContent, dataName, dataId, "", "")
+                                                    const insertAdminChatHistory = await userChatHistory.create({
+                                                        botId: botId,
+                                                        userId: userId,
+                                                        userMobileNo: userMobileNo,
+                                                        sender: "A",
+                                                        messageContent: keyData.stringValue,
+                                                        messageDatetime: new Date(),
+                                                        mainRedirectId: null,
+                                                        redirectId: scriptData.redirectId,
+                                                        userInputSaveIn: scriptData.variableName,
+                                                        validationType: scriptData.validationType,
+                                                        prevRedirectId: scriptData.prevRedirectId,
+                                                    })
+                                                    if (!insertAdminChatHistory) {
+                                                        callbackFunction("Failed to Insert Admin chat history")
+                                                    } else {
+                                                        mm.sendMSG(keyData.stringValue, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion,wpClientId, botId, userId,planId, (error, result) => {
+                                                            if (error) {
+                                                                console.log("Error in get method: ", error);
+                                                                callbackFunction('Failed to send message');
+                                                            } else {
+                                                                redirectId = scriptData.redirectId;
+                                                                let waitTime = scriptData.waitTime;
+                                                                if (waitTime !== null && waitTime > 0) {
+                                                                    setTimeout(processScript, waitTime);
+                                                                } else {
+                                                                    callbackFunction(null, "Success");
+                                                                }
+                                                            }
+                                                        });
+                                                    }
+                                                } else if (scriptData.messageSubType === "LIST") {
+                                                    let messageContent = scriptData.messageDraft,
+                                                        buttonText = scriptData.listButtonName,
+                                                        listData = [],
+                                                        manyInsertArray = []
+                                                    for (let i = 0; i < body[dataKey].length; i++) {
+                                                        const element = body[dataKey][i];
+    
+                                                        const object = {
+                                                            botId: botId,
+                                                            userId: userId,
+                                                            userMobileNo: userMobileNo,
+                                                            sender: "A",
+                                                            messageContent: element[dataName],
+                                                            messageDatetime: new Date(),
+                                                            mainRedirectId: scriptData.redirectId + "_" + (i + 1),
+                                                            redirectId: scriptData.redirectId + "_" + (i + 1),
+                                                            userInputSaveIn: scriptData.variableName,
+                                                            validationType: scriptData.validationType,
+                                                            prevRedirectId: scriptData.prevRedirectId,
+                                                        }
+                                                        manyInsertArray.push(object)
+                                                        const listObject = {
+                                                            id: scriptData.redirectId + "_" + (i + 1),
+                                                            optionName: element[dataName],
+                                                            desc: element[dataDesc]
+                                                        }
+                                                        listData.push(listObject)
+                                                    }
+    
+                                                    const insertAdminChatHistory = await userChatHistory.insertMany(manyInsertArray)
+                                                    if (!insertAdminChatHistory) {
+                                                        callbackFunction("Failed to Insert Admin chat history")
+                                                    } else {
+                                                        mm.sendInteractiveListMSGNew(messageContent, buttonText, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, listData,wpClientId, botId, userId,planId, (error, result) => {
+                                                            if (error) {
+                                                                console.log("Failed to send Button message: ", error);
+                                                                callbackFunction('Failed to send Button message');
+                                                            } else {
+                                                                redirectId = scriptData.redirectId;
+                                                                let waitTime = scriptData.waitTime;
+                                                                if (waitTime !== null && waitTime > 0) {
+                                                                    setTimeout(processScript, waitTime);
+                                                                } else {
+                                                                    callbackFunction(null, "Success");
+                                                                }
+                                                            }
+                                                        });
+                                                    }
+                                                } else if (scriptData.messageSubType === "DOCUMENT") {
+    
+                                                    const keyData = await flattenCartData(body[dataKey], scriptData.messageDraft, dataName, dataId, fileUrl, "")
+    
+    
+                                                    console.log("keyData", keyData);
+                                                    let caption = keyData.stringValue,
+                                                        mediaUrl = keyData.fileUrlValue,
+                                                        filename = Date.now()
+                                                    const insertAdminChatHistory = await userChatHistory.create({
+                                                        botId: botId,
+                                                        userId: userId,
+                                                        userMobileNo: userMobileNo,
+                                                        sender: "A",
+                                                        messageContent: caption,
+                                                        mediaUrl: mediaUrl,
+                                                        messageDatetime: new Date(),
+                                                        mainRedirectId: scriptData.redirectId,
+                                                        redirectId: scriptData.redirectId,
+                                                        userInputSaveIn: scriptData.variableName,
+                                                        validationType: scriptData.validationType,
+                                                        prevRedirectId: scriptData.prevRedirectId,
+                                                    })
+                                                    if (!insertAdminChatHistory) {
+                                                        callbackFunction("Failed to Insert Admin chat history")
+                                                    } else {
+                                                        mm.sendDocumentMedia(caption, mediaUrl, filename, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion,wpClientId, botId, userId,planId, (error, result) => {
+                                                            if (error) {
+                                                                console.log("Failed to send Document message: ", error);
+                                                                callbackFunction('Failed to send Document message');
+                                                            } else {
+                                                                redirectId = scriptData.redirectId;
+                                                                let waitTime = scriptData.waitTime;
+                                                                if (waitTime !== null && waitTime > 0) {
+                                                                    setTimeout(processScript, waitTime);
+                                                                } else {
+                                                                    callbackFunction(null, "Success");
+                                                                }
+                                                            }
+                                                        });
+                                                    }
+                                                } else {
+                                                    callbackFunction("messageSubType not matched")
+                                                }
+                                            } else {
+                                                callbackFunction("No Data Found")
+                                            }
+    
+                                        } else {
+                                            callbackFunction("Failed to send API Data")
+                                        }
+                                    }
+                                })
                             } else {
                                 callbackFunction("messageType not matched")
                             }
                         }
-
+    
                     }
                     processScript()
                 }
@@ -2175,6 +2727,30 @@ exports.handleMessageSend = async (data) => {
                         $unwind: {
                             path: "$clientData"
                         }
+                    },
+                    {
+                        "$lookup": {
+                            "from": "purchasedclientplans",
+                            "let": { "wpClientId": "$wpClientId" },
+                            "pipeline": [
+                                {
+                                    "$match": {
+                                        "$expr": {
+                                            "$and": [
+                                                { "$eq": ["$wpClientId", "$$wpClientId"] },
+                                                { "$eq": ["$isActive", true] }
+                                            ]
+                                        }
+                                    }
+                                }
+                            ],
+                            "as": "planData"
+                        }
+                    },
+                    {
+                        $unwind: {
+                            path: "$planData"
+                        }
                     }
                 ])
 
@@ -2188,6 +2764,7 @@ exports.handleMessageSend = async (data) => {
                         permanentAccessToken = checkBotExist[0].clientData.wpPermanentToken,
                         apiVersion = checkBotExist[0].clientData.wpApiVersion,
                         wpClientId = checkBotExist[0].clientData.wpClientId,
+                        planID = checkBotExist[0].planData._id,
                         userId = ""
                     const findUser = await clientUserContacts.findOneAndUpdate(
                         { wpClientId: wpClientId, mobileNo: userMobileNo },
@@ -2215,23 +2792,108 @@ exports.handleMessageSend = async (data) => {
                         const isBack = isBackMessage(userMessage)
 
                         if (isGreet) {
-                            greetMessage(userMessage, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, wpClientId, botId, userId, (err, result) => {
-                                if (err) {
-                                    console.log("Err", err);
-                                } else {
-                                    console.log("result", result);
-                                }
-                            })
+                            const UserObject = {
+                                wpClientId: wpClientId,
+                                planId: planID,
+                                wpMessageId: data.entry[0].changes[0].value.messages[0].text.id,
+                                mobileNumber: userMobileNo,
+                                sender: "USER",
+                                messageType: "SERVICE",
+                                messageStatus: "received",
+                                messageDateTime: new Date(),
+                                userId: userId,
+                                botId: botId,
+                                messsageDetails: userMessage
+
+                            }
+                            const insertMessageHistory = await messageHistory.create(UserObject)
+                            if (!insertMessageHistory) {
+                                console.log("Failed to insert in Message History");
+                            } else {
+                                greetMessage(userMessage, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, wpClientId, botId, userId, planID,(err, result) => {
+                                    if (err) {
+                                        console.log("Err", err);
+                                    } else {
+                                        console.log("result", result);
+                                    }
+                                })
+                            }
                         } else if (isBack) {
-                            backMessage(userMessage, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, wpClientId, botId, userId, triggerMsg, (err, result) => {
-                                if (err) {
-                                    console.log("Err", err);
-                                } else {
-                                    console.log("result", result);
-                                }
-                            })
+                            const UserObject = {
+                                wpClientId: wpClientId,
+                                planId: planID,
+                                wpMessageId: data.entry[0].changes[0].value.messages[0].text.id,
+                                mobileNumber: userMobileNo,
+                                sender: "USER",
+                                messageType: "SERVICE",
+                                messageStatus: "received",
+                                messageDateTime: new Date(),
+                                userId: userId,
+                                botId: botId,
+                                messsageDetails: userMessage
+                            }
+                            const insertMessageHistory = await messageHistory.create(UserObject)
+                            if (!insertMessageHistory) {
+                                console.log("Failed to insert in Message History");
+                            } else {
+                                backMessage(userMessage, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, wpClientId, botId, userId, triggerMsg, planID, (err, result) => {
+                                    if (err) {
+                                        console.log("Err", err);
+                                    } else {
+                                        console.log("result", result);
+                                    }
+                                })
+                            }
                         } else {
-                            textMessage(userMessage, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, wpClientId, botId, userId, (err, result) => {
+                            const UserObject = {
+                                wpClientId: wpClientId,
+                                planId: planID,
+                                wpMessageId: data.entry[0].changes[0].value.messages[0].text.id,
+                                mobileNumber: userMobileNo,
+                                sender: "USER",
+                                messageType: "SERVICE",
+                                messageStatus: "received",
+                                messageDateTime: new Date(),
+                                userId: userId,
+                                botId: botId,
+                                messsageDetails: userMessage
+
+                            }
+                            const insertMessageHistory = await messageHistory.create(UserObject)
+                            if (!insertMessageHistory) {
+                                console.log("Failed to insert in Message History");
+                            } else {
+                                textMessage(userMessage, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, wpClientId, botId, userId, planID, (err, result) => {
+                                    if (err) {
+                                        console.log("Err", err);
+                                    } else {
+                                        console.log("result", result);
+                                    }
+                                })
+                            }
+                        }
+                    } else if (type === "interactive" && interactiveType === "button_reply") {
+                        const UserObject = {
+                            wpClientId: wpClientId,
+                            planId: planID,
+                            wpMessageId: data.entry[0].changes[0].value.messages[0].interactive.id,
+                            mobileNumber: userMobileNo,
+                            sender: "USER",
+                            messageType: "SERVICE",
+                            messageStatus: "received",
+                            messageDateTime: new Date(),
+                            userId: userId,
+                            botId: botId,
+                            messsageDetails: data.entry[0].changes[0].value.messages[0].interactive.button_reply.title
+
+                        }
+                        const insertMessageHistory = await messageHistory.create(UserObject)
+                        if (!insertMessageHistory) {
+                            console.log("Failed to insert in Message History");
+                        } else {
+                            let redirectId = data.entry[0].changes[0].value.messages[0].interactive.button_reply.id
+                            let selectedOptions = data.entry[0].changes[0].value.messages[0].interactive.button_reply.title
+                            buttonMessage(redirectId, selectedOptions, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, wpClientId, botId, userId, planID, (err, result) => {
                                 if (err) {
                                     console.log("Err", err);
                                 } else {
@@ -2239,26 +2901,35 @@ exports.handleMessageSend = async (data) => {
                                 }
                             })
                         }
-                    } else if (type === "interactive" && interactiveType === "button_reply") {
-                        let redirectId = data.entry[0].changes[0].value.messages[0].interactive.button_reply.id
-                        let selectedOptions = data.entry[0].changes[0].value.messages[0].interactive.button_reply.title
-                        buttonMessage(redirectId, selectedOptions, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, wpClientId, botId, userId, (err, result) => {
-                            if (err) {
-                                console.log("Err", err);
-                            } else {
-                                console.log("result", result);
-                            }
-                        })
                     } else if (type === "interactive" && interactiveType === "list_reply") {
-                        let redirectId = data.entry[0].changes[0].value.messages[0].interactive.list_reply.id
-                        let selectedOptions = data.entry[0].changes[0].value.messages[0].interactive.list_reply.title
-                        ListMessage(redirectId, selectedOptions, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, wpClientId, botId, userId, (err, result) => {
-                            if (err) {
-                                console.log("Err", err);
-                            } else {
-                                console.log("result", result);
-                            }
-                        })
+                        const UserObject = {
+                            wpClientId: wpClientId,
+                            planId: planID,
+                            wpMessageId: data.entry[0].changes[0].value.messages[0].interactive.id,
+                            mobileNumber: userMobileNo,
+                            sender: "USER",
+                            messageType: "SERVICE",
+                            messageStatus: "received",
+                            messageDateTime: new Date(),
+                            userId: userId,
+                            botId: botId,
+                            messsageDetails: data.entry[0].changes[0].value.messages[0].interactive.list_reply.title
+
+                        }
+                        const insertMessageHistory = await messageHistory.create(UserObject)
+                        if (!insertMessageHistory) {
+                            console.log("Failed to insert in Message History");
+                        } else {
+                            let redirectId = data.entry[0].changes[0].value.messages[0].interactive.list_reply.id
+                            let selectedOptions = data.entry[0].changes[0].value.messages[0].interactive.list_reply.title
+                            ListMessage(redirectId, selectedOptions, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, wpClientId, botId, userId, planID, (err, result) => {
+                                if (err) {
+                                    console.log("Err", err);
+                                } else {
+                                    console.log("result", result);
+                                }
+                            })
+                        }
                     } else {
                         // res.sendStatus(200);
                     }

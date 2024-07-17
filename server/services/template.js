@@ -8,8 +8,7 @@ const axios = require('axios');
 const async = require('async');
 
 exports.get = async (req, res) => {
-    const { wpClientId, templateName, templateCategory, languages, fbTemplateStatus, fbTemplateId, status, sort, select, id } = req.body
-    const { fromDate, toDate } = req.body
+    const { wpClientId, templateName, templateCategory, languages, fbTemplateStatus, fbTemplateId, status, sort, select, id, fromDate, toDate } = req.body
     const filterObject = {}
 
     if (wpClientId) filterObject.wpClientId = { $regex: wpClientId, $options: 'i' }
@@ -25,7 +24,10 @@ exports.get = async (req, res) => {
     if (id) filterObject._id = id
 
     if (fromDate && toDate) {
-        filterObject.createdAt = { $gte: moment(fromDate).utcOffset("+05:30").format("YYYY-MM-DDTHH:mm:ss Z"), $lte: moment(toDate).utcOffset("+05:30").format("YYYY-MM-DDTHH:mm:ss Z") }
+        filterObject.createdAt = {
+            $gte: fromDate,
+            $lte: toDate
+        }
     }
 
     let dataUrl = Template.find(filterObject)

@@ -20,7 +20,7 @@ app.use(bodyParser.json({ limit: '50mb', extended: true }));
 
 app.use(cors());
 
-app.use('/static', express.static(path.join(__dirname, './uploads')));
+app.use('/static', express.static("./uploads/"));
 
 app.use('/', globalRoutes);
 

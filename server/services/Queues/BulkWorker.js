@@ -56,6 +56,8 @@ const sendMessage = async (data) => {
                     { upsert: true }, { new: true }
                 )
 
+                console.log("findUser", findUser);
+
                 if (response.statusCode == 200) {
                     message.wpMessageId = body.messages[0].id
                     message.messageStatus = "pending"

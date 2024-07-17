@@ -4,7 +4,7 @@ exports.dotenv = require('dotenv').config();
 const moment = require("moment");
 const axios = require("axios")
 const mongoose = require('mongoose');
-
+const messageHistory = require('../models/messageHistory');
 exports.checkAuth = (req, res, next) => {
     try {
 
@@ -191,7 +191,7 @@ exports.sendInteractiveListMSGDate = (msg, phone_no_id, token, from, scriptDetai
     }
 }
 
-exports.sendMSG = (message, from, phone_no_id, token, apiVersion, callback) => {
+exports.sendMSG = (message, from, phone_no_id, token, apiVersion,wpClientId, botId, userId,planId, callback) => {
 
     let messageData = JSON.stringify({
         TYPE: "TEXT",
@@ -212,48 +212,31 @@ exports.sendMSG = (message, from, phone_no_id, token, apiVersion, callback) => {
             headers: {
                 "Content-Type": "application/json"
             }
-        }).then((success) => {
+        }).then(async (success) => {
             let WP_MSG_ID = success.data.messages[0].id
-            callback(null, WP_MSG_ID);
-            // this.executeQueryData('UPDATE message_trasanction SET TEXT = ?, STATUS = ?, MESSAGE_STATUS = ?,  WP_MSG_ID = ?, MSG_DATETIME =? WHERE ID = ? ', [messageData, 'S', 'unsent', WP_MSG_ID, this.getSystemDate(), LAST_MSG_ID], supportKey, (error, resultTemplate) => {
-            //     if (error) {
-            //         console.log(error);
-            //         callback('Failed to update message trasanction');
-            //     } else {
+            const UserObject = {
+                wpClientId: wpClientId,
+                planId: planId,
+                wpMessageId: WP_MSG_ID,
+                mobileNumber: from,
+                sender: "BOT",
+                messageType: "SERVICE",
+                messageStatus: "pending",
+                messageDateTime: new Date(),
+                userId: userId,
+                botId: botId,
+                messsageDetails: message
 
-            //         console.log("success");
-            //     }
-            // })
+            }
+            const insertMessageHistory = await messageHistory.create(UserObject)
+            if (!insertMessageHistory) {
+                console.log("Failed to insert in Message History");
+                callback(null, WP_MSG_ID);
+            } else {
+                callback(null, WP_MSG_ID);
+            }
         }, (reason) => {
             callback(error)
-            // this.executeQueryData(`SELECT ID, MESSAGE_STATUS, TYPE, WP_CLIENT_ID, PLAN_TYPE, PLAN_ID, AMOUNT_CHARGES FROM view_message_trasanction where ID = ?`, [LAST_MSG_ID], supportKey, (error, results2) => {
-            //     if (error) {
-            //         console.log("Error in get message_message_trasanction", error);
-            //         callback(error)
-            //     } else {
-            //         let NEW_COLUMN_NAME = ''
-            //         if (results2[0].TYPE == 'UTILITY' && results2[0].PLAN_TYPE == 'R') NEW_COLUMN_NAME = "UTILITY_RATE_REMAINING"
-            //         else if (results2[0].TYPE == 'MARKETING' && results2[0].PLAN_TYPE == 'R') NEW_COLUMN_NAME = "MARKETING_RATE_REMAINING"
-            //         else if (results2[0].TYPE == 'AUTHENTICATION' && results2[0].PLAN_TYPE == 'R') NEW_COLUMN_NAME = "AUTH_RATE_REMAINING"
-            //         else if (results2[0].TYPE == 'SERVICE' && results2[0].PLAN_TYPE == 'R') NEW_COLUMN_NAME = "SERVICE_RATE_REMAINING"
-            //         else if (results2[0].TYPE == 'UTILITY' && results2[0].PLAN_TYPE == 'B') NEW_COLUMN_NAME = "UTI_BALANCE_REMAINING"
-            //         else if (results2[0].TYPE == 'MARKETING' && results2[0].PLAN_TYPE == 'B') NEW_COLUMN_NAME = "MAR_BALANCE_REMAINING"
-            //         else if (results2[0].TYPE == 'AUTHENTICATION' && results2[0].PLAN_TYPE == 'B') NEW_COLUMN_NAME = "AUTH_BALANCE_REMAINING"
-            //         else if (results2[0].TYPE == 'SERVICE' && results2[0].PLAN_TYPE == 'B') NEW_COLUMN_NAME = "SERVICE_BALANCE_REMAINING"
-            //         else NEW_COLUMN_NAME = ''
-
-            //         this.executeQueryData(`UPDATE message_trasanction SET STATUS = ?, MESSAGE_STATUS = ?, AMOUNT_CHARGES=0, WP_MSG_ID = ?, MSG_DATETIME =? WHERE ID = ?;UPDATE client_transaction SET DR_MSG_BALANCE = 0, DR_MSG_COUNT = 0 WHERE MSG_ID = ?;UPDATE client_plan_usage SET ${NEW_COLUMN_NAME} = (${NEW_COLUMN_NAME} + ${results2[0].AMOUNT_CHARGES}) where WP_CLIENT_ID = ? AND PLAN_ID = ?;`, ['F', 'failed', null, this.getSystemDate(), LAST_MSG_ID, LAST_MSG_ID], supportKey, (error, resultTemplate) => {
-            //             if (error) {
-            //                 console.log(error);
-            //                 callback('Failed to update message trasanction');
-            //             } else {
-            //                 console.log("Failed");
-            //                 callback()
-
-            //             }
-            //         })
-            //     }
-            // })
         })
     } catch (error) {
         console.log(error);
@@ -261,7 +244,7 @@ exports.sendMSG = (message, from, phone_no_id, token, apiVersion, callback) => {
     }
 }
 
-exports.sendMSGWithImage = (medialink, caption, from, phone_no_id, token, apiVersion, callback) => {
+exports.sendMSGWithImage = (medialink, caption, from, phone_no_id, token, apiVersion,wpClientId, botId, userId,planId, callback) => {
 
     let messageData = JSON.stringify({
         TYPE: "IMAGE_WITH_TEXT",
@@ -284,9 +267,29 @@ exports.sendMSGWithImage = (medialink, caption, from, phone_no_id, token, apiVer
             headers: {
                 "Content-Type": "application/json"
             }
-        }).then((success) => {
+        }).then(async (success) => {
             let WP_MSG_ID = success.data.messages[0].id
-            callback(null, WP_MSG_ID);
+            const UserObject = {
+                wpClientId: wpClientId,
+                planId: planId,
+                wpMessageId: WP_MSG_ID,
+                mobileNumber: from,
+                sender: "BOT",
+                messageType: "SERVICE",
+                messageStatus: "pending",
+                messageDateTime: new Date(),
+                userId: userId,
+                botId: botId,
+                messsageDetails: caption
+
+            }
+            const insertMessageHistory = await messageHistory.create(UserObject)
+            if (!insertMessageHistory) {
+                console.log("Failed to insert in Message History");
+                callback(null, WP_MSG_ID);
+            } else {
+                callback(null, WP_MSG_ID);
+            }
         }, (reason) => {
             console.log("error :- ", reason);
             callback(reason);
@@ -297,7 +300,7 @@ exports.sendMSGWithImage = (medialink, caption, from, phone_no_id, token, apiVer
     }
 }
 
-exports.sendInteractiveListMSG = (msg, phone_no_id, token, from, scriptDetails, header, buttonName, LAST_MSG_ID, apiVersion, callback) => {
+exports.sendInteractiveListMSG = (msg, phone_no_id, token, from, scriptDetails, header, buttonName, LAST_MSG_ID, apiVersion,wpClientId, botId, userId,planId, callback) => {
 
     try {
         var datas = []
@@ -367,7 +370,7 @@ exports.sendInteractiveListMSG = (msg, phone_no_id, token, from, scriptDetails, 
                 }
             }
 
-        }).then((success) => {
+        }).then( async (success) => {
             let WP_MSG_ID = success.data.messages[0].id
             this.executeQueryData('UPDATE message_trasanction SET TEXT =?, STATUS = ?, MESSAGE_STATUS = ?,  WP_MSG_ID = ?, MSG_DATETIME =? WHERE ID = ? ', [messageData, 'S', 'unsent', WP_MSG_ID, this.getSystemDate(), LAST_MSG_ID], supportKey, (error, resultTemplate) => {
                 if (error) {
@@ -414,7 +417,7 @@ exports.sendInteractiveListMSG = (msg, phone_no_id, token, from, scriptDetails, 
     }
 }
 
-exports.sendDocumentMedia = (caption, medialink, filename, from, phone_no_id, token, apiVersion, callback) => {
+exports.sendDocumentMedia = (caption, medialink, filename, from, phone_no_id, token, apiVersion,wpClientId, botId, userId,planId, callback) => {
     let messageData = JSON.stringify({
         TYPE: "DOCUMENT",
         LINK: medialink,
@@ -439,8 +442,29 @@ exports.sendDocumentMedia = (caption, medialink, filename, from, phone_no_id, to
             headers: {
                 "Content-Type": "application/json"
             }
-        }).then((success) => {
+        }).then( async (success) => {
             let WP_MSG_ID = success.data.messages[0].id
+            const UserObject = {
+                wpClientId: wpClientId,
+                planId: planId,
+                wpMessageId: WP_MSG_ID,
+                mobileNumber: from,
+                sender: "BOT",
+                messageType: "SERVICE",
+                messageStatus: "pending",
+                messageDateTime: new Date(),
+                userId: userId,
+                botId: botId,
+                messsageDetails: caption
+
+            }
+            const insertMessageHistory = await messageHistory.create(UserObject)
+            if (!insertMessageHistory) {
+                console.log("Failed to insert in Message History");
+                callback(null, WP_MSG_ID);
+            } else {
+                callback(null, WP_MSG_ID);
+            }
 
         }, (reason) => {
             console.log("error sendDocumentMedia :- ", reason);
@@ -453,7 +477,7 @@ exports.sendDocumentMedia = (caption, medialink, filename, from, phone_no_id, to
     }
 }
 
-exports.sendInteractiveButtonMSG = (text, from, phone_no_id, token, apiVersion, buttonData, callback) => {
+exports.sendInteractiveButtonMSG = (text, from, phone_no_id, token, apiVersion, buttonData,wpClientId, botId, userId,planId, callback) => {
 
     try {
         let datas = []
@@ -510,10 +534,29 @@ exports.sendInteractiveButtonMSG = (text, from, phone_no_id, token, apiVersion, 
                 }
             }
 
-        }).then((success) => {
-            console.log("success", success.data);
+        }).then(async (success) => {
             let WP_MSG_ID = success.data.messages[0].id
-            callback(null, WP_MSG_ID)
+            const UserObject = {
+                wpClientId: wpClientId,
+                planId: planId,
+                wpMessageId: WP_MSG_ID,
+                mobileNumber: from,
+                sender: "BOT",
+                messageType: "SERVICE",
+                messageStatus: "pending",
+                messageDateTime: new Date(),
+                userId: userId,
+                botId: botId,
+                messsageDetails: text
+
+            }
+            const insertMessageHistory = await messageHistory.create(UserObject)
+            if (!insertMessageHistory) {
+                console.log("Failed to insert in Message History");
+                callback(null, WP_MSG_ID);
+            } else {
+                callback(null, WP_MSG_ID);
+            }
         }, (reason) => {
             console.log("error InteractiveButtonMSG:- ", reason);
             callback(reason)
@@ -525,7 +568,7 @@ exports.sendInteractiveButtonMSG = (text, from, phone_no_id, token, apiVersion, 
     }
 }
 
-exports.sendInteractiveListMSGNew = (message, buttonText, from, phone_no_id, token, apiVersion, scriptDetails, callback) => {
+exports.sendInteractiveListMSGNew = (message, buttonText, from, phone_no_id, token, apiVersion, scriptDetails,wpClientId, botId, userId,planId, callback) => {
     try {
         var datas = []
         if (scriptDetails.length > 0) {
@@ -584,9 +627,29 @@ exports.sendInteractiveListMSGNew = (message, buttonText, from, phone_no_id, tok
                     "Content-Type": "application/json"
                 }
             }
-        }).then((success) => {
+        }).then(async (success) => {
             let WP_MSG_ID = success.data.messages[0].id
-            callback(null, WP_MSG_ID)
+            const UserObject = {
+                wpClientId: wpClientId,
+                planId: planId,
+                wpMessageId: WP_MSG_ID,
+                mobileNumber: from,
+                sender: "BOT",
+                messageType: "SERVICE",
+                messageStatus: "pending",
+                messageDateTime: new Date(),
+                userId: userId,
+                botId: botId,
+                messsageDetails: message
+
+            }
+            const insertMessageHistory = await messageHistory.create(UserObject)
+            if (!insertMessageHistory) {
+                console.log("Failed to insert in Message History");
+                callback(null, WP_MSG_ID);
+            } else {
+                callback(null, WP_MSG_ID);
+            }
         }, (reason) => {
             console.log("error in sendInteractiveListMSGNew:- ", reason.response.data);
             callback(reason.response.data)

@@ -166,9 +166,7 @@ exports.create = async (req, res) => {
         });
 
         let bulkData = req.body.bulkData;
-
         const savedBulkSender = await bulksender.save({ session });
-
         if (!savedBulkSender) {
             await session.abortTransaction();
             session.endSession();
@@ -192,9 +190,7 @@ exports.create = async (req, res) => {
             }));
 
 
-            const clientConfig = await clientWPConfig.find({
-                wpClientId: new mongoose.Types.ObjectId(req.body.wpClientId)
-            })
+            const clientConfig = await clientWPConfig.find({ wpClientId: new mongoose.Types.ObjectId(req.body.wpClientId) })
             if (!clientConfig) {
                 await session.abortTransaction();
                 session.endSession();
@@ -220,11 +216,10 @@ exports.create = async (req, res) => {
                             wpClientId: new mongoose.Types.ObjectId(req?.body?.wpClientId),
                             templateId: new mongoose.Types.ObjectId(req.body.templateId),
                             planId: new mongoose.Types.ObjectId(req?.body?.planId),
-                            botId: new mongoose.Types.ObjectId(req?.body?.botId),
                             wpMessageId: null,
                             sender: "SYSTEM",
                             messageType: templateData[0].category,
-                            messsageDetails: {},
+                            messsageDetails: "",
                             messageDateTime: null
 
                         }
@@ -318,7 +313,7 @@ exports.create = async (req, res) => {
 
 exports.get = async (req, res) => {
     // Extract parameters from the request body
-    const { wpClientId, templateId, campaignName, isScheduled, sort,createdAt, id } = req.body;
+    const { wpClientId, templateId, campaignName, isScheduled, sort, fromDate, toDate, id } = req.body;
     const filterObject = {};
 
     // Build the filter object based on provided parameters
@@ -327,11 +322,13 @@ exports.get = async (req, res) => {
     if (templateId) filterObject.templateId = new mongoose.Types.ObjectId(templateId);
     if (isScheduled) filterObject.isScheduled = isScheduled;
     if (id) filterObject._id = id;
-    if (createdAt) {
+    if (fromDate && toDate) {
         filterObject.createdAt = {
-            $gt: createdAt
+            $gte: fromDate,
+            $lte: toDate
         }
     }
+
 
 
     let dataUrl = bulkSender.aggregate([

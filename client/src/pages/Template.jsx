@@ -1,12 +1,12 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import Header from '../components/Header'
-import { FaTrashArrowUp, FaGear } from 'react-icons/fa6'
+import { FaTrashArrowUp } from 'react-icons/fa6'
 import DatepickerComponent from '../components/DatepickerComponent'
-import { FaArrowCircleDown, FaArrowDown, FaChevronDown, FaEdit, FaEye, FaFilter, FaPlus, FaShoppingBag, FaSortDown } from 'react-icons/fa'
+import { FaFilter, FaPlus } from 'react-icons/fa'
 import TemplateForm from '../Forms/TemplateForm'
 import { useSelector } from 'react-redux'
 import { toast } from 'react-toastify'
-import { createAPI, deleteAPI, getAPI } from '../constants/constants'
+import { createAPI, getAPI, loginAPI } from '../constants/constants'
 import moment from 'moment'
 import ShowTemplateModel from '../components/ShowTemplateModel'
 import { MdCancel } from 'react-icons/md'
@@ -36,41 +36,41 @@ const Template = () => {
     };
 
     const [loading, setLoading] = useState(false);
-
-    // const data = []
-    // const data = [1, 2, 3]
-
     const [categoryFilter, setCategoryFilter] = useState("")
     const [isCategoryOpen, setIsCategoryOpen] = useState(false);
+
+
+    const [statusFilter, setStatusFilter] = useState("")
+    const [isStatusOpen, setIsStatusOpen] = useState(false);
     const [filterApply, setFilterApply] = useState(false);
     const [data, setData] = useState([])
     let filterObject = {}
-    if (filterString.length > 0 || categoryFilter.length > 0 || selectedToDate) {
+    if (filterString.length > 0 || categoryFilter.length > 0) {
         filterObject = {
             "templateName": filterString,
             "templateCategory": categoryFilter,
-            // "toDate": moment(selectedToDate).utcOffset("+05:30").format("YYYY-MM-DDT23:59:59 Z")
-            // "panNo": filterString,
-            // "gstNo": filterString,
-            // "mobileNo": filterString,
-            // "emailId": filterString,
-            // "address": filterString
+            // fromDate: moment(selectedFromDate, 'ddd MMM DD YYYY HH:mm:ss [GMT]ZZ').startOf('day').utc().format(),
+            // toDate: moment(selectedToDate, 'ddd MMM DD YYYY HH:mm:ss [GMT]ZZ').endOf('day').utc().format(),
         }
     }
     useEffect(() => {
+        if (filterString.length > 0) {
+            const timerId = setTimeout(fetchData, 1000);
+            return () => {
+                clearTimeout(timerId)
+            }
+        }
         fetchData()
     }, [isDrawerTemplateOpen, filterString, page, filterApply])
 
     const fetchData = async () => {
-        // let filterObject = {}
         setLoading(true);
         setIsLoading(true)
         let res = await getAPI("/template/get", {
             wpClientId: _id,
             ...filterObject,
-            page: page
-            // fbTemplateStatus: "APPROVED"
-            // templateCategory: 
+            page: page,
+            fbTemplateStatus: statusFilter,
         })
         if (res.status) {
             setData(res.data)
@@ -85,6 +85,8 @@ const Template = () => {
     const [templateId, setTemplateId] = useState("")
     const [fbTemplateId, setFbTemplateId] = useState("")
     const [isDeleting, setIsDeleting] = useState(false)
+
+
     const deleteTemplate = async () => {
         setIsDeleting(true)
         const res = await createAPI("/template/deleteTemplate", {
@@ -127,7 +129,6 @@ const Template = () => {
         return () => window.removeEventListener('scroll', handleScroll);
     }, [handleScroll]);
 
-    console.log("page", page);
 
 
     return (
@@ -135,7 +136,7 @@ const Template = () => {
             <Header name="Templates" />
             <div className="w-full h-2/4 mt-5 p-1 ">
                 <div className='flex justify-between py-2'>
-                    <input type="text" id="input-email-label" value={filterString} onChange={(e) => setFilterString(e.target.value)} className="py-1 h-10 px-4 block w-1/4  rounded-lg text-sm focus:outline-none bg-slate-200 justify-center items-center" placeholder="Search here" />
+                    <input type="text" id="input-email-label" value={filterString} onChange={(e) => setFilterString(e.target.value)} className="py-1 h-10 px-4 block w-1/4  rounded-lg text-sm focus:outline-none bg-gray-100 justify-center items-center" autoComplete='off' placeholder="Search here" />
                     <div className='flex justify-end'>
                         <button type="button" onClick={getTemplateMeta} className="h-10 mx-1 py-1 px-4 flex justify-center items-center size-[50px] text-s font-regular rounded-lg border border-transparent bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:pointer-events-none dark:focus:outline-none dark:focus:ring-1 dark:focus:ring-gray-600">
                             {
@@ -152,19 +153,19 @@ const Template = () => {
                 </div>
                 {
                     filter &&
-                    <div className='w-full h-12 p-2 bg-slate-500 my-2 flex duration-300 gap-2'>
-                        <div>
+                    <div className='w-full h-12 p-2 bg-gray-100 my-2 rounded-md flex duration-300 gap-2'>
+                        {/* <div>
                             <DatepickerComponent selectedDate={selectedFromDate} handleDateChange={handleFromDateChange} />
                         </div>
                         <div >
                             <DatepickerComponent selectedDate={selectedToDate} handleDateChange={handleToDateChange} />
-                        </div>
+                        </div> */}
                         <div className="inline-block text-left">
                             <div>
                                 <button
                                     onClick={() => setIsCategoryOpen(!isCategoryOpen)}
                                     type="button"
-                                    className="inline-flex h-8 py-1 justify-center w-full rounded-md border border-gray-300 shadow-sm px-4 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none"
+                                    className="inline-flex h-8 py-1 justify-center w-full  rounded-md border border-gray-300 shadow-sm px-4 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none"
                                     id="menu-button"
                                     aria-expanded="true"
                                     aria-haspopup="true"
@@ -245,8 +246,95 @@ const Template = () => {
                             )}
                         </div>
 
+
+                        <div className="inline-block text-left">
+                            <div>
+                                <button
+                                    onClick={() => setIsStatusOpen(!isStatusOpen)}
+                                    type="button"
+                                    className="inline-flex h-8 py-1 justify-center w-full rounded-md border border-gray-300 shadow-sm px-4 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none"
+                                    id="menu-button"
+                                    aria-expanded="true"
+                                    aria-haspopup="true"
+                                >
+                                    {statusFilter.length == 0 ? "Template Status" : statusFilter}
+                                    {statusFilter.length > 0 && <MdCancel className='text-red-400 ml-2 text-m justify-center items-center  self-center' onClick={() => {
+                                        setStatusFilter("")
+                                    }} />
+                                    }
+                                    <svg
+                                        className="-mr-1 h-5 w-5"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        viewBox="0 0 20 20"
+                                        fill="currentColor"
+                                        aria-hidden="true"
+                                    >
+                                        <path
+                                            fillRule="evenodd"
+                                            d="M5.293 7.707a1 1 0 011.414 0L10 11.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                                            clipRule="evenodd"
+                                        />
+                                    </svg>
+                                </button>
+                            </div>
+
+                            {isStatusOpen && (
+                                <div
+                                    className="origin-top-right absolute mt-2 w-40 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none"
+                                    role="menu"
+                                    aria-orientation="vertical"
+                                    aria-labelledby="menu-button"
+                                    tabIndex="-1"
+                                >
+                                    <div className="py-1" role="none">
+                                        <a
+                                            href="#"
+                                            className="text-gray-700 block px-4 py-2 text-sm"
+                                            role="menuitem"
+                                            tabIndex="-1"
+                                            id="menu-item-0"
+                                            onClick={() => {
+                                                setStatusFilter("PENDING")
+                                                setIsStatusOpen(false)
+                                            }}
+                                        >
+                                            PENDING
+                                        </a>
+                                        <a
+                                            href="#"
+                                            className="text-gray-700 block px-4 py-2 text-sm"
+                                            role="menuitem"
+                                            tabIndex="-1"
+                                            id="menu-item-1"
+                                            onClick={() => {
+                                                setStatusFilter("APPROVED")
+                                                setIsStatusOpen(false)
+                                            }}
+
+                                        >
+                                            APPROVED
+                                        </a>
+                                        <a
+                                            href="#"
+                                            className="text-gray-700 block px-4 py-2 text-sm"
+                                            role="menuitem"
+                                            tabIndex="-1"
+                                            id="menu-item-2"
+                                            onClick={() => {
+                                                setStatusFilter("REJECTED")
+                                                setIsStatusOpen(false)
+                                            }}
+
+                                        >
+                                            REJECTED
+                                        </a>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
                         <div className='flex justify-end'>
-                            <button onClick={() => setFilterApply(!filterApply)} className='text-white text-sm h-8 py-1 w-24 rounded-sm bg-blue-500'>Apply</button>
+                            <button onClick={() => setFilterApply(!filterApply)} className='text-white text-sm h-[30px] py-1 w-24 rounded-sm bg-blue-500'>Apply</button>
                         </div>
                     </div>
                 }
@@ -298,7 +386,15 @@ const Template = () => {
                                     ))
                                 }
                             </div>
-                        </> : isLoading ? <div className="flex justify-center items-center"> <span className="animate-spin inline-block size-6 border-[2px] border-current border-t-transparent text-blue items-center rounded-full" role="status" aria-label="loading"></span></div> :
+                        </> : isLoading ? <div className="min-h-60 flex flex-col rounded-xl">
+                            <div className="flex flex-auto flex-col justify-center items-center p-4 md:p-5">
+                                <div className="flex justify-center">
+                                    <div className="animate-spin inline-block size-6 border-[3px] border-current border-t-transparent text-blue-600 rounded-full dark:text-blue-500" role="status" aria-label="loading">
+                                        <span className="sr-only">Loading...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div> :
                             <h3 className='text-2xl text-center font-medium mt-1'>No Template Found</h3>
 
                 }

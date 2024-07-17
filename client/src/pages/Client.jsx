@@ -2,7 +2,6 @@ import React, { useEffect } from 'react'
 import Header from '../components/Header'
 import { FaUserGear, FaTrash, FaTrashArrowUp, FaGear } from 'react-icons/fa6'
 import Drawer from '../components/Drawer'
-import Table from '../components/Table'
 import { useState } from 'react'
 import DatepickerComponent from '../components/DatepickerComponent'
 import ClientForm from '../Forms/ClientForm'
@@ -124,9 +123,7 @@ const Client = () => {
                         </div>
                     </div>
                 }
-
-
-                {/* <Table drawerCondition={{ isDrawerOpen, setIsDrawerOpen }} btnName="Add Client" /> */}
+                
                 {
                     data && data.length > 0 ?
                         <>

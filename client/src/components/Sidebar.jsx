@@ -3,7 +3,7 @@ import { BsArrowLeftShort, BsChevronDown } from "react-icons/bs"
 import { AiFillEnvironment } from "react-icons/ai"
 import { RiDashboardFill } from "react-icons/ri"
 import { LuFileBox, LuLayoutDashboard, LuLayoutTemplate, LuLogOut, LuMessagesSquare } from "react-icons/lu"
-import { FaGear, FaUserGear } from "react-icons/fa6";
+import { FaUserGear } from "react-icons/fa6";
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { LiaMailBulkSolid } from "react-icons/lia";
@@ -19,9 +19,9 @@ const Sidebar = ({ sideBar }) => {
     const adminData = [
         { title: "Dashboard", link: "/", icon: <LuLayoutDashboard /> },
         { title: "Clients", link: "/clients", icon: <FiUser /> },
-        { title: "Plan", link: "/plans", spacing: false, icon:<GiTakeMyMoney/> },
+        { title: "Plan", link: "/plans", spacing: false, icon: <GiTakeMyMoney /> },
         { title: "Logout", link: "/logout", spacing: true, icon: <LuLogOut /> },
-    ] 
+    ]
 
     const clientData = [
         { title: "Dashboard", link: "/", icon: <LuLayoutDashboard /> },
@@ -29,7 +29,7 @@ const Sidebar = ({ sideBar }) => {
         { title: "Bulk Sender", link: "/bulk-sender", icon: <LiaMailBulkSolid /> },
         { title: "Bulk Sender Details", link: "/bulk-sender-details", icon: <FaRegMessage /> },
         { title: "Message History", link: "/message-history", icon: <LuMessagesSquare /> },
-        { title: "Mangage Files", link: "/message-history", icon: <LuFileBox /> },
+        { title: "Mangage Files", link: "/manage-files", icon: <LuFileBox /> },
         { title: "Purchase Plan", link: "/purchase-plan", icon: <GiTakeMyMoney /> },
         {
             title: "Report",
@@ -47,7 +47,7 @@ const Sidebar = ({ sideBar }) => {
         { title: "Profile", link: "/profile", icon: <FiUser /> },
         { title: "Logout", link: "/logout", spacing: true, icon: <LuLogOut /> },
     ]
-    if (activePlanData.chatBotFeature) clientData.splice(4,0,   { title: "Automation", link: "/chatbot-automation", icon: <LiaMailBulkSolid /> },)
+    if (activePlanData.chatBotFeature) clientData.splice(4, 0, { title: "Automation", link: "/chatbot-automation", icon: <LiaMailBulkSolid /> },)
     const Menus = role === "ADMIN" ? adminData : clientData
 
     return (
@@ -56,14 +56,13 @@ const Sidebar = ({ sideBar }) => {
 
             <div className="inline-flex pl-2">
                 <AiFillEnvironment className={`bg-amber-300 text-3xl rounded cursor-pointer block float-left mr-2 duration-500 ${sideBar.open && "rotate-[360deg]"}`} />
-                <h1 className={`text-3xl text-white origin-left ml-2 font-medium duration-300 ${!sideBar.open && "scale-0"}`}>Cloudz</h1>
+                <h1 className={`text-[20px] text-white origin-left font-medium self-center  duration-300 ${!sideBar.open && "scale-0 hidden"}`}>WhatsUp India</h1>
             </div>
 
             <ul className="pt-2 overflow-y-auto max-h-[88vh]">
                 {Menus.map((menu, index) => (
                     <>
                         <li onClick={() => navigate(menu.link)} key={index + menu.link} className={`text-gray-300 text-lg font-medium flex items-center gap-x-4 cursor-pointer p-2 hover:bg-light-white rounded-md ${menu.spacing ? "mt-2" : "mt-2"}`}>
-
                             <span className="text-2xl block float-left">{menu.icon ? menu.icon : <TbBrandGoogleAnalytics />}</span>
                             <span className={`text-base font-medium flex-1 duration-200 ${!sideBar.open && "hidden"}`}>{menu.title}</span>
                             {menu.submenu && sideBar.open && (

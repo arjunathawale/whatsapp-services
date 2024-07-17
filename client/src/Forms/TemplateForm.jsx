@@ -571,7 +571,7 @@ const TemplateForm = ({ drawerCondition, btnName, data }) => {
             <div className='flex gap-1 w-full'>
               <div className='w-1/3 inline-block'>
                 <label htmlFor="input-label" className="block text-sm mb-1 font-medium"><span className='text-sm text-red-500 font-medium'>*</span>Template Name</label>
-                <input type="text" value={tempName} id="input-label" onChange={(e) => setTempName(e.target.value.replaceAll(" ", "_"))} className={`py-2 px-4 w-full block rounded-lg text-sm border mb-1 outline-none ${allRequirdFilled && tempName.length == 0 ? "border-red-500" : "border-gray-400"} `} placeholder="Enter Template Name" />
+                <input type="text" value={tempName} id="input-label" autoComplete='off' onChange={(e) => setTempName(e.target.value.replaceAll(" ", "_"))} className={`py-2 px-4 w-full block rounded-lg text-sm border mb-1 outline-none ${allRequirdFilled && tempName.length == 0 ? "border-red-500" : "border-gray-400"} `} placeholder="Enter Template Name" />
 
                 {
                   (allRequirdFilled && tempName.length === 0) ? <label for="input-label" className="block text-xs mb-1 ml-1 text-red-500">Template Name is Required</label> : <p className='text-[9px] font-semibold text-red-600 ml-1'>{tempName.length}/512</p>
@@ -740,7 +740,7 @@ const TemplateForm = ({ drawerCondition, btnName, data }) => {
               {
                 header == "TEXT" && <div className='inline-block w-2/3'>
                   <label htmlFor="input-label" className="block text-sm mb-1 font-medium"><span className='text-sm text-red-500 font-medium'>*</span>Header Text</label>
-                  <input type="text" maxLength={60} value={headerText} id="input-label" onChange={(e) => setHeaderText(e.target.value)} className={`py-2 px-4 block w-full rounded-lg text-sm border mb-1 outline-none ${allRequirdFilled && headerText.length == 0 ? "border-red-500" : "border-gray-400"} `} placeholder="Enter header text" />
+                  <input type="text" maxLength={60} autoComplete='off' value={headerText} id="input-label" onChange={(e) => setHeaderText(e.target.value)} className={`py-2 px-4 block w-full rounded-lg text-sm border mb-1 outline-none ${allRequirdFilled && headerText.length == 0 ? "border-red-500" : "border-gray-400"} `} placeholder="Enter header text" />
 
                   {
                     (allRequirdFilled && headerText.length === 0) ? <label for="input-label" className="block text-xs mb-1 ml-1 text-red-500">Header Text is Required</label> : <p className='text-[9px] font-semibold text-red-600 ml-1'>{headerText.length}/60</p>
@@ -751,7 +751,7 @@ const TemplateForm = ({ drawerCondition, btnName, data }) => {
                 (header == "IMAGE" || header == "VIDEO" || header == "DOCUMENT") && <div className='inline-block w-2/3' >
                   <label htmlFor="input-label" className="block text-sm mb-1 font-medium">Media file</label>
                   <label htmlFor="file-input" class="sr-only">Choose file</label>
-                  <input type="file" onChange={handleFileChange} name="file-input" id="file-input" class="block w-full border border-gray-400 shadow-sm rounded-lg text-sm focus:z-10 cursor-pointer  file:bg-gray-50 file:border-0 file:me-4 file:py-2"></input>
+                  <input type="file" onChange={handleFileChange} autoComplete='off' name="file-input" id="file-input" class="block w-full border border-gray-400 shadow-sm rounded-lg text-sm focus:z-10 cursor-pointer  file:bg-gray-50 file:border-0 file:me-4 file:py-2"></input>
 
                   {
                     (allRequirdFilled && mediaId.length === 0) && <p className='text-red-500 text-xs'>{header === "IMAGE" ? "Select jpeg or png image" : header === "VIDEO" ? "Select mp4 video file" : header === "DOCUMENT" ? "Select pdf files" : ''}</p>
@@ -770,6 +770,7 @@ const TemplateForm = ({ drawerCondition, btnName, data }) => {
                   onKeyDown={handleInputKeyDown}
                   className="border border-gray-400 rounded-md h-8 text-sm p-2 w-full outline-none"
                   placeholder="Enter Sample Header Value"
+                  autoComplete='off'
                 />
                 {tags.map((tag, index) => (
                   <div key={index} className="bg-gray-200 rounded-full px-3 py-0 mr-2 mb-2 mt-2 flex items-center">
@@ -817,6 +818,7 @@ const TemplateForm = ({ drawerCondition, btnName, data }) => {
                   onKeyDown={handleInputKeyBodyDown}
                   className="border border-gray-400 rounded-md h-8 text-sm p-2 w-full outline-none"
                   placeholder="Enter Sample Body Value"
+                  autoComplete='off'
                 />
                 {bodyTags.map((tag, index) => (
                   <div key={index} className="bg-gray-200 rounded-full px-3 py-0 mr-2 mb-2 mt-2 flex items-center">
@@ -832,7 +834,7 @@ const TemplateForm = ({ drawerCondition, btnName, data }) => {
             }
 
             <label htmlFor="input-label" className="block text-sm mb-1 mt-4 font-medium">Footer Text</label>
-            <input type="text" value={footerText} maxLength={60} id="input-label" onChange={(e) => setFooterText(e.target.value)} className={`py-2 px-4 w-full block rounded-lg text-sm border mb-1 outline-none border-gray-400 `} placeholder="Enter footer text" />
+            <input type="text" autoComplete='off' value={footerText} maxLength={60} id="input-label" onChange={(e) => setFooterText(e.target.value)} className={`py-2 px-4 w-full block rounded-lg text-sm border mb-1 outline-none border-gray-400 `} placeholder="Enter footer text" />
             <p className='text-[9px] font-semibold text-red-600 ml-1'>{footerText.length}/60</p>
 
             {/* Button Dropdown */}
@@ -906,7 +908,7 @@ const TemplateForm = ({ drawerCondition, btnName, data }) => {
               buttonType === "URL" && <><div className='flex gap-2 mt-3'>
                 <div className='w-1/3 inline-block'>
                   <label htmlFor="input-label" className="block text-sm mb-1 font-medium"><span className='text-sm text-red-500 font-medium'>*</span>Button Name</label>
-                  <input type="text" value={buttonName} maxLength={25} id="input-label" onChange={(e) => setButtonName(e.target.value)} className={`py-2 px-4 w-full block rounded-lg text-sm border mb-1 outline-none ${allRequirdFilled && buttonName.length == 0 ? "border-red-500" : "border-gray-400"} `} placeholder="Enter Template Name" />
+                  <input type="text" autoComplete='off' value={buttonName} maxLength={25} id="input-label" onChange={(e) => setButtonName(e.target.value)} className={`py-2 px-4 w-full block rounded-lg text-sm border mb-1 outline-none ${allRequirdFilled && buttonName.length == 0 ? "border-red-500" : "border-gray-400"} `} placeholder="Enter Template Name" />
                   <p className='text-[9px] font-semibold text-red-600 ml-1'>{buttonName.length}/25</p>
                 </div>
 
@@ -962,30 +964,30 @@ const TemplateForm = ({ drawerCondition, btnName, data }) => {
                 </div>
                 <div className='w-[50%] inline-block'>
                   <label htmlFor="input-label" className="block text-sm mb-1 font-medium"><span className='text-sm text-red-500 font-medium'>*</span>Website URL</label>
-                  <input type="text" value={buttonUrlString} id="input-label" maxLength={2000} onChange={(e) => setButtonUrlString(e.target.value)} className={`py-2 px-4 w-full block rounded-lg text-sm border font-medium mb-1 outline-none ${allRequirdFilled && buttonUrlString.length == 0 ? "border-red-500" : "border-gray-400"} `} placeholder={urlType == "STATIC" ? "https://www.example.com" : "https://www.example.com/{{1}}"} />
+                  <input type="text" autoComplete='off' value={buttonUrlString} id="input-label" maxLength={2000} onChange={(e) => setButtonUrlString(e.target.value)} className={`py-2 px-4 w-full block rounded-lg text-sm border font-medium mb-1 outline-none ${allRequirdFilled && buttonUrlString.length == 0 ? "border-red-500" : "border-gray-400"} `} placeholder={urlType == "STATIC" ? "https://www.example.com" : "https://www.example.com/{{1}}"} />
                   <p className='text-[9px] font-semibold text-red-600 ml-1'>{buttonUrlString.length}/2000</p>
                 </div>
               </div>
-              {
-                urlType == "DYNAMIC" && buttonUrlString && <>
+                {
+                  urlType == "DYNAMIC" && buttonUrlString && <>
                     <label htmlFor="input-label" className="block text-sm mb-0 font-medium"><span className='text-sm text-red-500 font-medium'>*</span>Add sample URL</label>
-                <label htmlFor="input-label" className="block text-xs mb-1 font-medium">To help us review your message template, please add an example of the website URL. Do not use real customer information.</label>
-                <input type="text" value={buttonUrlDynamicString} id="input-label" maxLength={2000} onChange={(e) => setButtonUrlDynamicString(e.target.value)} className={`py-2 px-4 w-full block rounded-lg text-sm border ont-medium mb-1 outline-none ${allRequirdFilled && buttonUrlString.length == 0 ? "border-red-500" : "border-gray-400"} `} placeholder={`Enter full URL for ${buttonUrlString}`+"/{{1}}"} />
-                </>
-              }
-              
+                    <label htmlFor="input-label" className="block text-xs mb-1 font-medium">To help us review your message template, please add an example of the website URL. Do not use real customer information.</label>
+                    <input type="text" autoComplete='off' value={buttonUrlDynamicString} id="input-label" maxLength={2000} onChange={(e) => setButtonUrlDynamicString(e.target.value)} className={`py-2 px-4 w-full block rounded-lg text-sm border ont-medium mb-1 outline-none ${allRequirdFilled && buttonUrlString.length == 0 ? "border-red-500" : "border-gray-400"} `} placeholder={`Enter full URL for ${buttonUrlString}` + "/{{1}}"} />
+                  </>
+                }
+
               </>
             }
             {
               buttonType === "PHONE_NUMBER" && <div className='flex gap-2 mt-3'>
                 <div className='w-1/3 inline-block'>
                   <label htmlFor="input-label" className="block text-sm mb-1 font-medium"><span className='text-sm text-red-500 font-medium'>*</span>Button Name</label>
-                  <input type="text" value={buttonName} maxLength={20} id="input-label" onChange={(e) => setButtonName(e.target.value)} className={`py-2 px-4 w-full block rounded-lg text-sm border mb-1 outline-none ${allRequirdFilled && buttonName.length == 0 ? "border-red-500" : "border-gray-400"} `} placeholder="Enter Button Name" />
+                  <input type="text" autoComplete='off' value={buttonName} maxLength={20} id="input-label" onChange={(e) => setButtonName(e.target.value)} className={`py-2 px-4 w-full block rounded-lg text-sm border mb-1 outline-none ${allRequirdFilled && buttonName.length == 0 ? "border-red-500" : "border-gray-400"} `} placeholder="Enter Button Name" />
                   <p className='text-[9px] font-semibold text-red-600 ml-1'>{buttonName.length}/25</p>
                 </div>
                 <div className='w-2/3 inline-block'>
                   <label htmlFor="input-label" className="block text-sm mb-1 font-medium"><span className='text-sm text-red-500 font-medium'>*</span>Phone Number (9199887766)</label>
-                  <input maxLength={10} type="text" value={buttonCallString} id="input-label" onChange={(e) => setButtonCallString(e.target.value)} className={`py-2 px-4 w-full block rounded-lg text-sm border mb-1 outline-none ${allRequirdFilled && buttonCallString.length == 0 ? "border-red-500" : "border-gray-400"} `} placeholder="Enter Phone Number" />
+                  <input maxLength={10} autoComplete='off' type="text" value={buttonCallString} id="input-label" onChange={(e) => setButtonCallString(e.target.value)} className={`py-2 px-4 w-full block rounded-lg text-sm border mb-1 outline-none ${allRequirdFilled && buttonCallString.length == 0 ? "border-red-500" : "border-gray-400"} `} placeholder="Enter Phone Number" />
                   <p className='text-[9px] font-semibold text-red-600 ml-1'>{buttonCallString.length}/10</p>
                 </div>
               </div>
@@ -994,11 +996,11 @@ const TemplateForm = ({ drawerCondition, btnName, data }) => {
               buttonType === "COPY_CODE" && <div className='flex gap-2 mt-3'>
                 <div className='w-1/3 inline-block'>
                   <label htmlFor="input-label" className="block text-sm mb-1 font-medium"><span className='text-sm text-red-500 font-medium'>*</span>Button Name</label>
-                  <input disabled type="text" value={btnNameOfferCode} id="input-label" className={`py-2 px-4 w-full block rounded-lg text-sm border mb-1 outline-none ${allRequirdFilled && btnNameOfferCode.length == 0 ? "border-red-500" : "border-gray-400"} `} placeholder="Enter Button Name" />
+                  <input disabled type="text" autoComplete='off' value={btnNameOfferCode} id="input-label" className={`py-2 px-4 w-full block rounded-lg text-sm border mb-1 outline-none ${allRequirdFilled && btnNameOfferCode.length == 0 ? "border-red-500" : "border-gray-400"} `} placeholder="Enter Button Name" />
                 </div>
                 <div className='w-2/3 inline-block'>
                   <label htmlFor="input-label" className="block text-sm mb-1 font-medium"><span className='text-sm text-red-500 font-medium'>*</span>Offer Code (XXHA25)</label>
-                  <input maxLength={15} type="text" value={buttonOfferCodeString} id="input-label" onChange={(e) => setButtonOfferCodeString(e.target.value)} className={`py-2 px-4 w-full block rounded-lg text-sm border mb-1 outline-none ${allRequirdFilled && buttonOfferCodeString.length == 0 ? "border-red-500" : "border-gray-400"} `} placeholder="Enter Phone Number" />
+                  <input maxLength={15} type="text" autoComplete='off' value={buttonOfferCodeString} id="input-label" onChange={(e) => setButtonOfferCodeString(e.target.value)} className={`py-2 px-4 w-full block rounded-lg text-sm border mb-1 outline-none ${allRequirdFilled && buttonOfferCodeString.length == 0 ? "border-red-500" : "border-gray-400"} `} placeholder="Enter Phone Number" />
                   <p className='text-[9px] font-semibold text-red-600 ml-1'>{buttonOfferCodeString.length}/15</p>
                 </div>
               </div>
@@ -1008,7 +1010,7 @@ const TemplateForm = ({ drawerCondition, btnName, data }) => {
               buttonType === "QUICK_REPLY" && <div className='flex gap-2 mt-3'>
                 <div className='w-1/3 inline-block'>
                   <label htmlFor="input-label" className="block text-sm mb-1 font-medium"><span className='text-sm text-red-500 font-medium'>*</span>Button Name</label>
-                  <input type="text" value={buttonName} id="input-label" onChange={(e) => setButtonName(e.target.value)} className={`py-2 px-4 w-full block rounded-lg text-sm border mb-1 outline-none ${allRequirdFilled && buttonName.length == 0 ? "border-red-500" : "border-gray-400"} `} placeholder="Enter Button Name" />
+                  <input type="text" autoComplete='off' value={buttonName} id="input-label" onChange={(e) => setButtonName(e.target.value)} className={`py-2 px-4 w-full block rounded-lg text-sm border mb-1 outline-none ${allRequirdFilled && buttonName.length == 0 ? "border-red-500" : "border-gray-400"} `} placeholder="Enter Button Name" />
                   <p className='text-[9px] font-semibold text-red-600 ml-1'>{buttonName.length}/2 5</p>
                 </div>
               </div>
@@ -1084,8 +1086,7 @@ const TemplateForm = ({ drawerCondition, btnName, data }) => {
 
 
           {/* live preview */}
-          <div className=' w-1/3 px-4 '>
-            {/* <img src={bgUrlImage} alt="Header" className="w-full h-full relative object-center rounded-lg mt-2" /> */}
+          <div className=' w-1/3 px-4 overflow-hidden '>
             <h4 className='text-lg font-medium'>Template Preview</h4>
             {
               header === "IMAGE" && <img src={tempMediaUrl} alt="Header" className="w-full h-[150px] object-center rounded-lg mt-2" />
@@ -1101,9 +1102,9 @@ const TemplateForm = ({ drawerCondition, btnName, data }) => {
 
 
             <article class="text-wrap ... bg-white p-2 rounded-lg">
-              <p className='text-xs font-semibold'>{headerText}</p>
-              <p className='text-xs' dangerouslySetInnerHTML={{ __html: bodyText }}></p>
-              <p className='text-xs text-gray-400 '>{...footerText}</p>
+              <p className='text-xs font-semibold break'>{headerText}</p>
+              <p className='text-xs break' dangerouslySetInnerHTML={{ __html: bodyText }}></p>
+              <p className='text-xs text-gray-400 break'>{...footerText}</p>
               <p className='text-[10px] mt-2 text-end '>9.00 PM</p>
               <hr />
               <hr />

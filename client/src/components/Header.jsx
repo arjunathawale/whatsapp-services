@@ -13,7 +13,7 @@ const Header = ({ name }) => {
 
     const [isDrawerOpen, setIsDrawerOpen] = useState(false)
     return (
-        <div className='w-full h-10 flex bg-gray-200 rounded-sm justify-between items-center px-3 sticky top-0'>
+        <div className='w-full h-10 flex bg-gray-100 rounded-lg justify-between items-center px-3 sticky top-0'>
             <h1 className='text-black text-xl'>{name}</h1>
 
             <div className='flex justify-center items-center'>

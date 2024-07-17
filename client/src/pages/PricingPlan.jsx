@@ -1,10 +1,7 @@
 import React, { useEffect } from 'react'
 import Header from '../components/Header'
-import { FaTrashArrowUp } from 'react-icons/fa6'
 import { useState } from 'react'
 import DatepickerComponent from '../components/DatepickerComponent'
-import ClientForm from '../Forms/ClientForm'
-import { FaEdit } from 'react-icons/fa'
 import PricingPlanForm from '../Forms/PricingPlanForm'
 import { getAPI } from '../constants/constants'
 import { toast } from 'react-toastify'
@@ -13,8 +10,6 @@ import { MdCheck, MdClose, MdEdit } from 'react-icons/md'
 const PricingPlan = () => {
     const [filter, setFilter] = useState(false)
     const [isLoading, setIsLoading] = useState(true)
-    const [isDrawerOpen, setIsDrawerOpen] = useState(false)
-    const [isPricingOpen, setIsPricingOpen] = useState(false)
     const [isDrawerPricingOpen, setIsDrawerPricingOpen] = useState(false)
 
     const [selectedFromDate, setSelectedFromDate] = useState(new Date())
@@ -39,8 +34,6 @@ const PricingPlan = () => {
     const closeDialog = () => {
         setIsOpen(false);
     };
-    // const data = []
-    // const data = [1, 2, 3]
 
     const [data, setData] = useState([]);
 
@@ -48,7 +41,6 @@ const PricingPlan = () => {
         fetchData()
     }, [isDrawerPricingOpen])
     const fetchData = async () => {
-        // let filterObject = {}
         setIsLoading(true)
         let res = await getAPI("/pricingPlan/get", {})
         if (res.status) {
@@ -68,15 +60,11 @@ const PricingPlan = () => {
                 <div className='flex justify-between py-2'>
                     <input type="text" id="input-email-label" autoComplete='off' className="py-1 h-10 px-4 block w-1/4  rounded-lg text-sm focus:outline-none bg-slate-200 justify-center items-center" placeholder="Search here" />
                     <div className='flex justify-end'>
-                        {/* <button type="button" onClick={() => setFilter(prev => !prev)} className="h-10 mx-1 py-1 px-4 flex justify-center items-center size-[45px] text-s font-regular rounded-lg border border-transparent bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:pointer-events-none dark:focus:outline-none dark:focus:ring-1 dark:focus:ring-gray-600">
-                            <FaFilter />
-                        </button> */}
                         <button onClick={() => setIsDrawerPricingOpen(true)} type="button" className="py-1 h-10 px-4 inline-flex items-center gap-x-2 text-sm rounded-lg border border-transparent bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50 disabled:pointer-events-none dark:focus:outline-none dark:focus:ring-1 dark:focus:ring-gray-600">
                             Add Plan
                         </button>
                     </div>
                 </div>
-                {/* Filterr */}
                 {
                     filter &&
                     <div className='w-full h-12 p-2 bg-slate-500 my-2 flex duration-300 gap-2'>

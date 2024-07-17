@@ -335,18 +335,29 @@ const BulkSender = () => {
     };
 
 
+    const handleDownload = () => {
+        const url = 'http://localhost:8989/static/samplesheet/samplesheet.xlsx'
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'file.pdf';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
+
     return (
         <div className="p-1">
             <Header name="Bulk Sender" />
 
             {
-                expireDatetime <= currentDatetime  ?
+                expireDatetime <= currentDatetime ?
                     <div className="flex items-center justify-center min-h-screen p-6">
                         <div className="text-center p-3 max-w-md mx-auto bg-white rounded-xl shadow-md space-y-4 transition transform duration-500 ease-in-out hover:scale-105">
                             <div className="">
                                 <h2 className="text-2xl text-red-500 font-semibold mb-4 animate-bounce">Plan Expired</h2>
                                 <p className="text-m">Your plan expired on {moment(activePlanData?.expireDatetime).format("DD-MMM-YYYY hh:mm:ss A")}.</p>
-                                <button className="mt-6 px-4 py-1.5 bg-red-500 text-white rounded-lg shadow hover:bg-red-700 outline-none transition duration-300" onClick={()=> navigate("/purchase-plan")}>
+                                <button className="mt-6 px-4 py-1.5 bg-red-500 text-white rounded-lg shadow hover:bg-red-700 outline-none transition duration-300" onClick={() => navigate("/purchase-plan")}>
                                     Buy New Plan
                                 </button>
                             </div>
@@ -357,7 +368,7 @@ const BulkSender = () => {
                         {
                             (page === 1) && <div>
                                 <div className='flex justify-end'>
-                                    <p className='text-xs text-center mt-3 p-1 max-w-max rounded-md cursor-pointer bg-red-600 text-white'>Download Sample Excel</p>
+                                    <p className='text-xs text-center mt-3 p-1 max-w-max rounded-md cursor-pointer bg-red-600 text-white' onClick={handleDownload}>Download Sample Excel</p>
                                 </div>
                                 <div className='flex justify-center'>
                                     <p className='text-xs text-center'>You can use Excel file (.xlsx format) with phone numbers.You can also add extra columns that you wish to connect to the template.</p>

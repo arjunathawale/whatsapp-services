@@ -9,7 +9,6 @@ import { setPlanData } from '../store/clientSlice'
 
 const PurchasePlan = () => {
     const { _id } = useSelector(state => state.user.userData)
-    const [filter, setFilter] = useState(false)
     const [isLoading, setIsLoading] = useState(true)
     const [data, setData] = useState([]);
     const dispatch = useDispatch()

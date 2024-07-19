@@ -90,6 +90,40 @@ exports.templateMedia = function (req, res) {
     }
 }
 
+exports.clientMediaFiles = function (req, res) {
+    try {
+        const form = new formidable.IncomingForm();
+        form.parse(req, function (err, fields, files) {
+            if (err) {
+                console.error(err);
+                res.status(400).send({ status: false, message: "Failed to get file" });
+            } else {
+                var oldPath = files.Image[0].filepath;
+                var newPath = path.join(__dirname, '../uploads/clientMediaFiles/') + fields.Name;
+                var rawData = fs.readFileSync(oldPath)
+                fs.writeFile(newPath, rawData, function (err) {
+                    if (!err) {
+                        res.status(200).send({status: true, message: "success"})
+                    }
+                    else {
+                        console.error(err);
+                        res.status(400).send({ status: false, message: "Failed to upload" });
+                    }
+                })
+            }
+        })
+    }
+    catch (err) {
+        console.error(err);
+        res.status(500).send({
+            "status": false,
+            "message": "Server Error",
+            error: err
+        });
+    }
+}
+
+
 
 exports.sendInteractiveListMSGDate = (msg, phone_no_id, token, from, scriptDetails, header, button, LAST_MSG_ID, apiVersion, callback) => {
     try {

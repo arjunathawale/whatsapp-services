@@ -55,7 +55,6 @@ const BulkSenderDetails = () => {
     const fetchData = async () => {
 
         setIsLoading(true)
-
         let res = await getAPI("/bulksender/get", {
             wpClientId: _id,
             fromDate: moment(selectedFromDate, 'ddd MMM DD YYYY HH:mm:ss [GMT]ZZ').startOf('day').utc().format(),

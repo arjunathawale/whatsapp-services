@@ -3,6 +3,8 @@ const PurchaseClientPlans = require('../models/purchaseClientPlans');
 const plans = require('../models/pricingPlan');
 const mm = require("./global");
 const mongoose = require('mongoose');
+const crypto = require('crypto');
+const axios = require('axios');
 
 exports.get = async (req, res) => {
     const { isActive, wpClientId, planId, startDatetime, expireDatetime, id } = req.body
@@ -152,5 +154,59 @@ exports.create = async (req, res) => {
         } else {
             res.status(400).send({ status: false, message: "Failed to save info", error: err });
         }
+    }
+}
+
+exports.generatePaymentLink = async (req, res) => {
+
+    try {
+        const { name, mobileNo, amount, planId, wpClientId, planExpireIn } = req.body
+        const merchantId = "PGTESTPAYUAT";
+        const saltKey = "099eb0cd-02cf-4e2a-8aca-3e6c6aff0399";
+
+        const merchantTransactionId = "M1MS35IGRKZM-" + Date.now();
+        const keyIndex = 1
+        const data = {
+            merchantId: merchantId,
+            merchantTransactionId: merchantTransactionId,
+            merchantUserId: "Arjun008",
+            name: name,
+            amount: amount * 100,
+            redirectUrl: `https://62v2gfh6-8989.inc1.devtunnels.ms/checkPaymentStatus/${wpClientId}/?planID=${planId}&mobile=${mobileNo}&uniquePaymentId=${merchantTransactionId}`,
+            redirectMode: "POST",
+            mobileNumber: mobileNo,
+            paymentInstrument: {
+                type: "PAY_PAGE"
+            }
+        }
+        const payload = JSON.stringify(data);
+        const payloadMain = Buffer.from(payload).toString('base64');
+        const string = payloadMain + "/pg/v1/pay" + saltKey;
+        const sha256 = crypto.createHash('sha256').update(string).digest('hex');
+        const checkSum = sha256 + "###" + keyIndex
+
+        const devUrl = 'https://api-preprod.phonepe.com/apis/pg-sandbox/pg/v1/pay'
+        const options = {
+            method: 'POST',
+            url: devUrl,
+            headers: {
+                'accpect': 'application/json',
+                'Content-Type': 'application/json',
+                'X-VERIFY': checkSum
+            },
+            data: {
+                request: payloadMain
+            }
+        }
+
+        axios.request(options).then((response) => {
+            console.log(response.data.data);
+            res.redirect(response.data.data.instrumentResponse.redirectInfo.url);
+        }).catch((error) => {
+            console.log(error.response.data);
+            res.status(500).send({ status: false, message: "Internal Server Error" });
+        });
+    } catch (error) {
+        res.status(400).send({ status: false, message: "Failed to generate payment link", error: error });
     }
 }

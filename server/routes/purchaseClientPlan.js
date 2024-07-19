@@ -7,5 +7,6 @@ router
     .post('/create', purchaseClientPlanService.create)
     .put('/update', purchaseClientPlanService.update)
     .delete('/delete', purchaseClientPlanService.delete)
+    .post('/generatePaymentLink', purchaseClientPlanService.generatePaymentLink)
 
 module.exports = router;

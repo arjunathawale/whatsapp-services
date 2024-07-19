@@ -56,13 +56,13 @@ const Sidebar = ({ sideBar }) => {
 
             <div className="inline-flex pl-2">
                 <AiFillEnvironment className={`bg-amber-300 text-3xl rounded cursor-pointer block float-left mr-2 duration-500 ${sideBar.open && "rotate-[360deg]"}`} />
-                <h1 className={`text-[20px] text-white origin-left font-medium self-center  duration-300 ${!sideBar.open && "scale-0 hidden"}`}>WhatsUp India</h1>
+                <h1 className={`text-[21px] text-white origin-left font-medium self-center  duration-300 ${!sideBar.open && "scale-0 hidden"}`}>WhatsUp <span className='text-orange-500'>In</span><span className='text-gray-200'>d</span><span className='text-green-400'>ia</span></h1>
             </div>
 
-            <ul className="pt-2 overflow-y-auto max-h-[88vh]">
+            <ul className="pt-2 overflow-y-auto max-h-[88vh]" >
                 {Menus.map((menu, index) => (
                     <>
-                        <li onClick={() => navigate(menu.link)} key={index + menu.link} className={`text-gray-300 text-lg font-medium flex items-center gap-x-4 cursor-pointer p-2 hover:bg-light-white rounded-md ${menu.spacing ? "mt-2" : "mt-2"}`}>
+                        <li onClick={() => navigate(menu.link)} key={index} className={`text-gray-300 text-lg font-medium flex items-center gap-x-4 cursor-pointer p-2 hover:bg-light-white rounded-md ${menu.spacing ? "mt-2" : "mt-2"}`}>
                             <span className="text-2xl block float-left">{menu.icon ? menu.icon : <TbBrandGoogleAnalytics />}</span>
                             <span className={`text-base font-medium flex-1 duration-200 ${!sideBar.open && "hidden"}`}>{menu.title}</span>
                             {menu.submenu && sideBar.open && (

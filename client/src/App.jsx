@@ -15,6 +15,7 @@ import BulkSenderDetails from './pages/BulkSenderDetails'
 import MessageHistory from './pages/MessageHistory'
 import Profile from './pages/Profile'
 import PurchasePlan from './pages/PurchasePlan'
+import ManageFiles from './pages/ManageFiles'
 
 
 function App() {
@@ -58,6 +59,11 @@ function App() {
           <Route path='/bulk-sender' element={
             <ProtectedRoute isLoggedIn={isLoggedIn} roles={["CLIENT"]}>
               <BulkSender />
+            </ProtectedRoute>
+          } />
+          <Route path='/manage-files' element={
+            <ProtectedRoute isLoggedIn={isLoggedIn} roles={["CLIENT"]}>
+              <ManageFiles />
             </ProtectedRoute>
           } />
           {/* <Route path='/chatbot-automation' element={

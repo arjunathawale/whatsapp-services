@@ -8,7 +8,7 @@ import { useSelector, useDispatch } from 'react-redux'
 import { setPlanData } from '../store/clientSlice'
 
 const PurchasePlan = () => {
-    const { _id } = useSelector(state => state.user.userData)
+    const { _id, clientname, mobileNo } = useSelector(state => state.user.userData)
     const [isLoading, setIsLoading] = useState(true)
     const [data, setData] = useState([]);
     const dispatch = useDispatch()
@@ -38,6 +38,11 @@ const PurchasePlan = () => {
             wpClientId: _id,
             startDatetime: getCurrentDateTime(),
             expireDatetime: getDateTimeAfterDays(item?.planExpireIn)
+            // planExpireIn: item?.planExpireIn,
+            // amount: item?.planPrice,
+            // name: clientname,
+            // mobileNo: mobileNo
+
         })
         if (res.status) {
             toast.success("Plan Purchased Successfully")

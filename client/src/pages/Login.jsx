@@ -4,11 +4,13 @@ import { toast } from 'react-toastify'
 import { useNavigate } from 'react-router-dom'
 import { setLogin, setUserData, setRole, setUserCrendentials, setAuthToken, setPlanData } from '../store/clientSlice'
 import { useDispatch } from 'react-redux'
+import { FaEye, FaEyeSlash } from 'react-icons/fa6'
 
 const Login = () => {
     const navigate = useNavigate()
     const [username, setUsername] = useState("")
     const [password, setPassword] = useState("")
+    const [showPassword, setShowPassword] = useState(false)
     const dispatch = useDispatch()
 
     const handleLogin = async (e) => {
@@ -22,7 +24,6 @@ const Login = () => {
             })
             if (res.status) {
                 toast.success(res.message)
-                console.log(res);
                 dispatch(setLogin(true))
                 dispatch(setUserData(res?.data))
                 dispatch(setRole(res?.data?.role))
@@ -40,12 +41,13 @@ const Login = () => {
             <div className="flex min-h-full flex-1 flex-col justify-center px-6 py-12 lg:px-8">
                 <div className="sm:mx-auto sm:w-full sm:max-w-sm">
                     <img
-                        className="mx-auto h-10 w-auto"
-                        src="https://tailwindui.com/img/logos/mark.svg?color=indigo&shade=600"
+                        className="mx-auto h-14 w-auto"
+                        src="./mail.png"
                         alt="Your Company"
                     />
-                    <h2 className="mt-10 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900">
-                        Login in to your account
+                    <h2 className="mt-5 text-center text-3xl font-bold leading-9 tracking-tight text-gray-900">
+                        <span className='text-green-400'>WhatsUp </span><span className='text-orange-400'>In</span><span className='text-gray-100'>d</span><span className='text-green-400'>ia</span>
+                        <p className='text-sm font-normal'>Revolutionizing Messaging for India</p>
                     </h2>
                 </div>
 
@@ -75,7 +77,7 @@ const Login = () => {
                                     Password
                                 </label>
                                 <div className="text-sm">
-                                    <a href="#" className="font-semibold text-indigo-600 hover:text-indigo-500">
+                                    <a href="#" className="font-semibold text-blue-600 hover:text-blue-500">
                                         Forgot password?
                                     </a>
                                 </div>
@@ -84,20 +86,25 @@ const Login = () => {
                                 <input
                                     id="password"
                                     name="password"
-                                    type="password"
+                                    type={showPassword ? "text" : "password"}
                                     autoComplete="current-password"
                                     required
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 outline-none px-4 sm:text-sm sm:leading-6"
+                                    className="block w-full  rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 outline-none px-4 sm:text-sm sm:leading-6"
                                 />
+                                {
+                                    showPassword ? <FaEyeSlash className='absolute cursor-pointer right-[36%] top-[62.4%]' onClick={() => setShowPassword(!showPassword)}/> : <FaEye className='absolute cursor-pointer right-[36%] top-[62.4%]' onClick={() => setShowPassword(!showPassword)}/>
+                                }
+
+                                
                             </div>
                         </div>
 
                         <div>
                             <button
                                 type="submit"
-                                className="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                                className="flex w-full justify-center rounded-md bg-blue-500 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm"
                                 onClick={handleLogin}
                             >
                                 Login
@@ -107,7 +114,7 @@ const Login = () => {
 
                     <p className="mt-10 text-center text-sm text-gray-500">
                         Not a member?{' '}
-                        <a href="#" className="font-semibold leading-6 text-indigo-600 hover:text-indigo-500">
+                        <a href="#" className="font-semibold leading-6 text-blue-500 hover:text-blue-600">
                             Start a 14 day free trial
                         </a>
                     </p>

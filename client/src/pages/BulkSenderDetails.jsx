@@ -99,6 +99,28 @@ const BulkSenderDetails = () => {
     };
 
 
+    useEffect(() => {
+        const observer = new IntersectionObserver((entries) => {
+            if (entries[0]?.isIntersecting) {
+                observer.unobserve(lastCard);
+                if (data.length < dataCount) setPage((prevPage) => prevPage + 1);
+            }
+        }, { threshold: 0.5 })
+
+        const lastCard = document.querySelector('.detail-card:last-child');
+        if (!lastCard) {
+            return;
+        }
+        observer.observe(lastCard)
+
+        return () => {
+            if (lastCard) observer.unobserve(lastCard)
+            observer.disconnect()
+        }
+    }, [data])
+
+
+
     return (
         <div className='p-1'>
             <Header name="Bulk Sender Details" />
@@ -133,7 +155,7 @@ const BulkSenderDetails = () => {
                             <div className="grid grid-cols-3 gap-4 overflow-auto">
                                 {
                                     data.map((item, index) => (
-                                        <div className="flex flex-col bg-white border  shadow-m rounded-xl py-4 px-4" key={index} >
+                                        <div className="flex flex-col bg-white border  shadow-m rounded-xl py-4 px-4 detail-card" key={index} >
                                             <div className='flex justify-between'>
                                                 <h3 className="text-lg font-bold cursor-pointer text-gray-800" onClick={() => {
                                                     setTemplateData(item)
@@ -155,10 +177,10 @@ const BulkSenderDetails = () => {
                                                 Scheduled :- <span className='text-sm font-semibold text-black'>{item?.isScheduled ? "Yes" : "No"}</span>
                                             </p>
                                             <p className={`text-sm text-gray-500 dark:text-neutral-60`}>
-                                                Scheduled At :- <span className='text-sm font-semibold text-black'>{item?.scheduledDateTime ? moment(item?.scheduledDateTime).format("DD-MMM-YYYY hh:mm A") : "NIL"}</span>
+                                                Scheduled At :- <span className='text-sm font-semibold text-black'>{item?.scheduledDateTime ? moment(item?.scheduledDateTime).format("DD-MMM-YYYY hh:mm:ss A") : "NIL"}</span>
                                             </p>
                                             <p className={`text-sm text-gray-500 dark:text-neutral-60`}>
-                                                Created At :- <span className='text-sm font-semibold text-black'>{moment(item?.createdAt).format("DD-MMM-YYYY hh:mm A")}</span>
+                                                Created At :- <span className='text-sm font-semibold text-black'>{moment(item?.createdAt).format("DD-MMM-YYYY hh:mm:ss A")}</span>
                                             </p>
                                             <div className='flex flex-row justify-between mt-1'>
 

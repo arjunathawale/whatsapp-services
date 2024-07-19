@@ -1,5 +1,6 @@
 export const BASE_URL = 'http://localhost:8989/api';
 export const BASE_URL_2 = 'http://localhost:8989';
+export const FILE_BASE_URL = 'http://localhost:8989/static';
 export const MAX_FILE_SIZE = 10485760; // 10 MB
 export const DEFAULT_TIMEOUT = 5000; // 5 seconds
 const authToken = localStorage.getItem("authToken") || ""
@@ -84,7 +85,7 @@ export const fileUploadAPI = async (apiRoute, file) => {
             }
         });
 
-        if (response.data.status === true) return { ...response.data, fileName: URL }
+        if (response.data.status === true) return { ...response.data, fileName: URL, originalName: file.file.name }
         else return response.data
     } catch (error) {
         console.error('Upload Error:', error);

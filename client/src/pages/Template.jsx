@@ -44,6 +44,7 @@ const Template = () => {
     const [isStatusOpen, setIsStatusOpen] = useState(false);
     const [filterApply, setFilterApply] = useState(false);
     const [data, setData] = useState([])
+    const [dataCount, setDataCount] = useState(0)
     let filterObject = {}
     if (filterString.length > 0 || categoryFilter.length > 0) {
         filterObject = {
@@ -53,15 +54,34 @@ const Template = () => {
             // toDate: moment(selectedToDate, 'ddd MMM DD YYYY HH:mm:ss [GMT]ZZ').endOf('day').utc().format(),
         }
     }
+
+
     useEffect(() => {
-        if (filterString.length > 0) {
-            const timerId = setTimeout(fetchData, 1000);
-            return () => {
-                clearTimeout(timerId)
-            }
+        let timerId = 0;
+        setPage(1);
+        if (filterString) {
+            timerId = setTimeout(fetchData, 1000);
+        } else {
+            fetchData()
         }
-        fetchData()
-    }, [isDrawerTemplateOpen, filterString, page, filterApply])
+        return () => {
+            clearTimeout(timerId)
+        }
+
+        // setPage(1);
+        // if (filterString.length > 0) {
+        //     const timerId = setTimeout(fetchData, 1000);
+        //     return () => {
+        //         clearTimeout(timerId)
+        //     }
+        // }
+        // // fetchData()
+    }, [isDrawerTemplateOpen, filterString, filterApply])
+
+
+    useEffect(() => {
+        if (page > 1) fetchDataOnScroll()
+    }, [page])
 
     const fetchData = async () => {
         setLoading(true);
@@ -71,9 +91,33 @@ const Template = () => {
             ...filterObject,
             page: page,
             fbTemplateStatus: statusFilter,
+            limit: 9
         })
         if (res.status) {
+            console.log(res)
             setData(res.data)
+            setDataCount(res.count)
+            setIsLoading(false)
+            setLoading(false);
+        } else {
+            toast.error("Something went wrong")
+            setLoading(false);
+            setIsLoading(false)
+        }
+    }
+    const fetchDataOnScroll = async () => {
+        setLoading(true);
+        setIsLoading(true)
+        let res = await getAPI("/template/get", {
+            wpClientId: _id,
+            ...filterObject,
+            page: page,
+            fbTemplateStatus: statusFilter,
+            limit: 9
+        })
+        if (res.status) {
+            setData((prev) => [...prev, ...res.data])
+            setDataCount(res.count)
             setIsLoading(false)
             setLoading(false);
         } else {
@@ -119,15 +163,27 @@ const Template = () => {
         }
     }
 
-    const handleScroll = useCallback(() => {
-        if (window.innerHeight + document.documentElement.scrollTop !== document.documentElement.offsetHeight || loading) return;
-        setPage((prevPage) => prevPage + 1);
-    }, [loading]);
+
 
     useEffect(() => {
-        window.addEventListener('scroll', handleScroll);
-        return () => window.removeEventListener('scroll', handleScroll);
-    }, [handleScroll]);
+        const observer = new IntersectionObserver((entries) => {
+            if (entries[0]?.isIntersecting) {
+                observer.unobserve(lastCard);
+                if (data.length < dataCount) setPage((prevPage) => prevPage + 1);
+            }
+        }, { threshold: 0.5 })
+
+        const lastCard = document.querySelector('.templateCard:last-child');
+        if (!lastCard) {
+            return;
+        }
+        observer.observe(lastCard)
+
+        return () => {
+            if (lastCard) observer.unobserve(lastCard)
+            observer.disconnect()
+        }
+    }, [data])
 
 
 
@@ -341,10 +397,10 @@ const Template = () => {
                 {
                     data && data.length > 0 ?
                         <>
-                            <div className="grid grid-cols-3 gap-4 overflow-auto">
+                            <div className="grid grid-cols-3 gap-4 overflow-auto" >
                                 {
                                     data.map(item => (
-                                        <div className="flex flex-col bg-white border  shadow-m rounded-xl p-4 md:p-5" key={item._id} >
+                                        <div className="flex flex-col templateCard bg-white border  shadow-m rounded-xl p-4 md:p-5" key={item._id} >
                                             <div className='flex justify-between'>
                                                 <h3 className="text-lg font-bold cursor-pointer text-gray-800 break-all" onClick={() => {
                                                     setTemplateData(item)

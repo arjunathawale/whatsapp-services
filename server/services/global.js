@@ -5,15 +5,14 @@ const moment = require("moment");
 const axios = require("axios")
 const mongoose = require('mongoose');
 const messageHistory = require('../models/messageHistory');
+
+
 exports.checkAuth = (req, res, next) => {
     try {
-
-
         var apikey = req.headers['apikey']
         if (apikey == process.env.API_KEY) {
             next();
         } else {
-            // console.log(process.env.API_KEY);
             res.status(300).send({ status: false, message: "Access Denied...!" });
         }
     } catch (error) {
@@ -320,7 +319,7 @@ exports.sendMSGWithImage = (medialink, caption, from, phone_no_id, token, apiVer
             const insertMessageHistory = await messageHistory.create(UserObject)
             if (!insertMessageHistory) {
                 console.log("Failed to insert in Message History");
-                callback(null, WP_MSG_ID);
+                callback("Failed to insert in Message History");
             } else {
                 callback(null, WP_MSG_ID);
             }
@@ -592,8 +591,8 @@ exports.sendInteractiveButtonMSG = (text, from, phone_no_id, token, apiVersion, 
                 callback(null, WP_MSG_ID);
             }
         }, (reason) => {
-            console.log("error InteractiveButtonMSG:- ", reason);
-            callback(reason)
+            console.log("error InteractiveButtonMSG:- ", reason.response.data);
+            callback(reason.response.data.data)
         })
 
     } catch (error) {

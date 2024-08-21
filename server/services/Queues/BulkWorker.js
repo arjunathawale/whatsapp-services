@@ -3,6 +3,7 @@ const request = require('request');
 const bulkSenderDetails = require('../../models/bulkSenderDetails');
 const messageHistory = require('../../models/messageHistory');
 const clientUserContacts = require("../../models/clientUserContacts");
+const { connection } = require("./connection");
 
 exports.BulkWorker = async () => {
     console.log("Starting Worker...");
@@ -11,10 +12,7 @@ exports.BulkWorker = async () => {
         await sendMessage(job?.data);
         console.log("Message Sent ....!")
     }, {
-        connection: {
-            host: '127.0.0.1',
-            port: 6379,
-        },
+        connection: connection,
         removeOnComplete: {
             age: 360,
             count: 10
@@ -55,8 +53,6 @@ const sendMessage = async (data) => {
                     },
                     { upsert: true }, { new: true }
                 )
-
-                console.log("findUser", findUser);
 
                 if (response.statusCode == 200) {
                     message.wpMessageId = body.messages[0].id

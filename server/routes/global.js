@@ -7,8 +7,9 @@ router
    .post('/upload/templateMedia', require('../services/global').templateMedia)
    .post('/upload/clientMediaFiles', require('../services/global').clientMediaFiles)
    .post('/client/clientLogin', require('../services/client').clientLogin)
+   .post('/client/register', require('../services/client').register)
    .post('/user/userLogin', require('../services/user').userLogin)
-   // .use('*', require('../services/global').checkAuth)
+   .use('*', require('../services/global').checkAuth)
    .use('/api', require('../services/global').checkToken)
 
    .use('/api/user', require('./user'))

@@ -1,5 +1,6 @@
 const { Worker } = require("bullmq");
 const { handleMessageSend } = require("../webhookRes");
+const { connection } = require("./connection");
 
 exports.chatBotWorker = async () => {
     console.log("Starting Worker...");
@@ -7,10 +8,7 @@ exports.chatBotWorker = async () => {
         console.log("Recieved Chatbot Job Id: ", job?.id)
         handleMessageSend(job?.data)
     }, {
-        connection: {
-            host: '127.0.0.1',
-            port: 6379,
-        },
+        connection: connection,
         removeOnComplete: {
             age: 3600,
             count: 1000

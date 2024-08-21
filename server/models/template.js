@@ -60,20 +60,11 @@ const templateSchema = new moongoose.Schema({
     },
     mediaId:{
         type: String,
-        maxlength: 4096
     },
     submittedAt: {
         type: Date,
         default: new Date()
-    },
-    // createdAt: {
-    //     type: String,
-    //     default: mm.getCurrentDate()
-    // },
-    // updatedAt: {
-    //     type: String,
-    // }
-
+    }
 }, { timestamps: true })
 
 module.exports = moongoose.model('Template', templateSchema)

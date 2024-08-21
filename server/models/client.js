@@ -17,12 +17,12 @@ const clientSchema = new mongoose.Schema({
     },
     gstNo: {
         type: String,
-        unique: [true, 'GST Number should be unique']
+        // unique: [true, 'GST Number should be unique']
     },
     panNo: {
         type: String,
-        required: [true, 'PAN Number is required'],
-        unique: true
+        // required: [true, 'PAN Number is required'],
+        // unique: true
     },
     address: {
         type: String,
@@ -31,7 +31,7 @@ const clientSchema = new mongoose.Schema({
     emailId: {
         type: String,
         required: [true, 'Email Id is required'],
-        unique: true,
+        unique: [true, 'Email Id should be unique'],
         maxlength: 64
     },
     mobileNo: {
@@ -50,7 +50,7 @@ const clientSchema = new mongoose.Schema({
     password: {
         type: String,
         required: [true, 'Password is required'],
-        maxlength: 16,
+        maxlength: 128,
     },
     clientSecretKey: {
         type: String,

@@ -4,6 +4,7 @@ const bulkSenderDetails = require('../../models/bulkSenderDetails');
 const webHookResponses = require('../../models/webHookResponses');
 const messageHistory = require('../../models/messageHistory');
 const Template = require('../../models/template');
+const { connection } = require("./connection");
 
 exports.statusWorker = async () => {
     console.log("Starting Worker...");
@@ -12,10 +13,7 @@ exports.statusWorker = async () => {
         updateStatus(job?.data);
         console.log("Recieved Stutus Done ....!")
     }, {
-        connection: {
-            host: '127.0.0.1',
-            port: 6379,
-        },
+        connection: connection,
         removeOnComplete: {
             age: 3600,
             count: 1000

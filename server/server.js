@@ -9,6 +9,10 @@ const path = require('path');
 const cors = require('cors');
 const http = require('http')
 
+
+const serverStatusMonitor = require('express-status-monitor')();
+app.use(serverStatusMonitor);
+
 const server = http.createServer(app);
 const connectDB = require("./config/dbConnect");
 //routes
@@ -28,6 +32,7 @@ app.use('/', globalRoutes);
 // app.disable('x-powered-by');
 
 
+
 const startServer = async () => {
     try {
         await connectDB();
@@ -43,4 +48,5 @@ const startServer = async () => {
 }
 
 startServer()
+
 

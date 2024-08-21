@@ -51,7 +51,7 @@ exports.get = async (req, res) => {
 
         const getManageFilesCount = await manageFiles.countDocuments(filterObject)
         const getmanageFiles = await dataUrl
-        res.status(200).send({ status: true, message: "success", count: getManageFilesCount, totalFileSizeUsed: result[0].totalFileSize, data: getmanageFiles });
+        res.status(200).send({ status: true, message: "success", count: getManageFilesCount, totalFileSizeUsed: result[0]?.totalFileSize, data: getmanageFiles });
     } catch (err) {
         console.log(err);
         res.status(400).send({ status: false, message: "Failed to get Info", error: err });

@@ -1,10 +1,8 @@
-const { Queue } = require("bullmq")
+const { Queue } = require("bullmq");
+const { connection } = require("./connection");
 
 const statusQueues = new Queue('chatBotQueue', {
-    connection: {
-        host: '127.0.0.1',
-        port: 6379
-    }
+    connection: connection
 });
 
 exports.addToChatBotQueue = async (queueName, data) => {

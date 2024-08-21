@@ -5,7 +5,7 @@ const moogoose = require('mongoose');
 
 
 exports.get = async (req, res) => {
-    const { wpClientId, bulkMasterId, isScheduled, sort, select, id } = req.body
+    const { wpClientId, bulkMasterId, mobileNumber, messageStatus, isScheduled, sort, select, id } = req.body
     const filterObject = {}
 
 
@@ -14,16 +14,16 @@ exports.get = async (req, res) => {
     if (isScheduled) filterObject.isScheduled = isScheduled
     if (id) filterObject._id = id
 
+    
+    let orConditions = [];
+    if (mobileNumber) orConditions.push({ mobileNumber: { $regex: mobileNumber, $options: 'i' } });
+    if (messageStatus) orConditions.push({ messageStatus: { $regex: messageStatus, $options: 'i' } });
+    if (orConditions.length > 0) {
+        filterObject.$or = orConditions;
+    }
+
     let dataUrl = bulkSenderDetails.find(filterObject)
 
-    if (sort) {
-        let sortFix = sort.replaceAll(",", " ")
-        dataUrl = dataUrl.sort(sortFix)
-    }
-    if (select) {
-        let selectFix = select.replaceAll(",", " ")
-        dataUrl = dataUrl.select(selectFix)
-    }
 
     let page = Number(req.body.page) || 1
     let limit = Number(req.body.limit) || 10

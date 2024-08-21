@@ -5,7 +5,7 @@ const plans = require('../models/purchaseClientPlans');
 const jwt = require('jsonwebtoken');
 const mm = require("../services/global")
 const moment = require("moment");
-const { default: mongoose } = require('mongoose');
+const { mongoose } = require('mongoose');
 const bcrypt = require("bcryptjs");
 
 
@@ -79,25 +79,19 @@ exports.get = async (req, res) => {
 }
 
 exports.create = async (req, res) => {
-
-
-
-
-
-
     try {
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(req.body.password || '12345678', salt);
         const client = new Client({
             role: "CLIENT",
             clientname: req.body.clientname,
-            panNo: req.body.panNo,
-            gstNo: req.body.gstNo,
+            panNo: req.body.panNo || "",
+            gstNo: req.body.gstNo || "",
             address: req.body.address,
             emailId: req.body.emailId,
             mobileNo: req.body.mobileNo,
             password: hashedPassword,
-            isActive: req.body.isActive,
+            isActive: req.body.isActive || true,
             clientSecretKey: generateSecretKey()
         })
         const savedClient = await client.save();
@@ -356,5 +350,33 @@ exports.updatePassword = async (req, res) => {
 
 exports.bookAppointment = async (req, res) => {
     const { date, batch } = req.body
-    res.status(200).send({ status: true, message: "success", data: [{ date, batch, tokenNumber: "14072024/001", fileUrl: "https://admin.marathamatrimony.net:8924/static/fileReceipt/MM254008.pdf" }] });
+    res.status(200).send({ status: true, message: "success", data: [{ date, batch, tokenNumber: "202408/001", fileUrl: "https://admin.marathamatrimony.net:8924/static/fileReceipt/MM254008.pdf" }] });
+}
+
+exports.register = async (req, res) => {
+    try {
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(req.body.password || '12345678', salt);
+        const client = new Client({
+            role: "CLIENT",
+            clientname: req.body.clientname,
+            // panNo: req.body.panNo || "",
+            // gstNo: req.body.gstNo || "",
+            address: req.body.address,
+            emailId: req.body.emailId,
+            mobileNo: req.body.mobileNo,
+            password: hashedPassword,
+            isActive: req.body.isActive || true,
+            clientSecretKey: generateSecretKey()
+        })
+        const savedClient = await client.save();
+        res.status(200).send({ insertId: savedClient._id, status: true, message: "Client created", data: savedClient });
+    } catch (err) {
+        console.log(err);
+        if (err.code == 11000) {
+            res.status(400).send({ status: false, message: `${Object.entries(err.keyValue)[0][0]} already taken` });
+        } else {
+            res.status(400).send({ status: false, message: "Failed to save info", error: err });
+        }
+    }
 }

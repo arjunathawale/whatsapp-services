@@ -7,5 +7,7 @@ router
     .post('/create', messageHistoryService.create)
     .put('/update', messageHistoryService.update)
     .delete('/delete', messageHistoryService.delete)
-
+    
+    .post('/getMessageStats', messageHistoryService.getMessageStats)
+    .post('/getMonthMessageStats', messageHistoryService.getMonthMessageStats)
 module.exports = router;

@@ -402,7 +402,6 @@ exports.getFBTemplate = async (req, res) => {
 
                     } else {
                         const updateTemplate = await Template.findOneAndUpdate({ fbTemplateId: item.fbTemplateId }, item, { new: true })
-                        console.log("updateTemplate", updateTemplate);
                     }
                 }, function done(err) {
                     if (err) {

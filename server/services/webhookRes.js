@@ -8,11 +8,26 @@ const mm = require('../services/global')
 const request = require('request');
 const { addToStatusQueue } = require('./Queues/WebhookStatusProducer');
 const { addToChatBotQueue } = require('./Queues/ChatBotProvider');
+const { setItem, getItem } = require('./Queues/Redis');
+
+
+let selectLanguage = 'en'
 let USER_INPUT = ''
 let limitObject = {
     limit: 10,
     page: 1
 }
+
+const translateLanguageFunc = async (text, lang) => {
+    try {
+        const { default: translate } = await import('translate');
+        const result = await translate(text, { to: lang });
+        return result;
+    } catch (error) {
+        console.log(error);
+    }
+};
+
 
 
 exports.VerifyWebhook = (req, res) => {
@@ -93,7 +108,7 @@ exports.handleWebhookRequests = async (req, res) => {
 }
 
 // first message like ('hello', 'hi', 'hey', 'home', 'main', 'menu')
-const greetMessage = async (message, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, wpClientId, botId, userId,planId,  callbackFunction) => {
+const greetMessage = async (message, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, wpClientId, botId, userId, planId, callbackFunction) => {
     try {
         const insertUserChatHistory = await userChatHistory.create({
             botId: botId,
@@ -126,7 +141,7 @@ const greetMessage = async (message, userMobileNo, phoneNumberId, permanentAcces
                             callbackFunction("Chat script not found")
                         } else {
                             if (scriptData.messageType === "TEXT") {
-                                let messageContent = scriptData.messageDraft
+                                let messageContent = await translateLanguageFunc(scriptData.messageDraft, selectLanguage)
                                 const insertAdminChatHistory = await userChatHistory.create({
                                     botId: botId,
                                     userId: userId,
@@ -143,7 +158,7 @@ const greetMessage = async (message, userMobileNo, phoneNumberId, permanentAcces
                                 if (!insertAdminChatHistory) {
                                     callbackFunction("Failed to Insert Admin chat history")
                                 } else {
-                                    mm.sendMSG(messageContent, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion,wpClientId, botId, userId,planId, (error, result) => {
+                                    mm.sendMSG(messageContent, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, wpClientId, botId, userId, planId, (error, result) => {
                                         if (error) {
                                             console.log("Error in get method: ", error);
                                             callbackFunction('Failed to send message');
@@ -159,7 +174,7 @@ const greetMessage = async (message, userMobileNo, phoneNumberId, permanentAcces
                                     });
                                 }
                             } else if (scriptData.messageType === "IMAGE") {
-                                let caption = scriptData.messageDraft,
+                                let caption = await translateLanguageFunc(scriptData.messageDraft, selectLanguage),
                                     mediaUrl = scriptData.mediaUrl
                                 const insertAdminChatHistory = await userChatHistory.create({
                                     botId: botId,
@@ -178,7 +193,7 @@ const greetMessage = async (message, userMobileNo, phoneNumberId, permanentAcces
                                 if (!insertAdminChatHistory) {
                                     callbackFunction("Failed to Insert Admin chat history")
                                 } else {
-                                    mm.sendMSGWithImage(mediaUrl, caption, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion,wpClientId, botId, userId,planId, (error, result) => {
+                                    mm.sendMSGWithImage(mediaUrl, caption, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, wpClientId, botId, userId, planId, (error, result) => {
                                         if (error) {
                                             console.log("Failed to send image message: ", error);
                                             callbackFunction('Failed to send image message');
@@ -193,10 +208,10 @@ const greetMessage = async (message, userMobileNo, phoneNumberId, permanentAcces
                                         }
                                     });
                                 }
-    
-    
+
+
                             } else if (scriptData.messageType === "DOCUMENT") {
-                                let caption = scriptData.messageDraft,
+                                let caption = await translateLanguageFunc(scriptData.messageDraft, selectLanguage),
                                     mediaUrl = scriptData.mediaUrl,
                                     filename = Date.now()
                                 const insertAdminChatHistory = await userChatHistory.create({
@@ -216,7 +231,7 @@ const greetMessage = async (message, userMobileNo, phoneNumberId, permanentAcces
                                 if (!insertAdminChatHistory) {
                                     callbackFunction("Failed to Insert Admin chat history")
                                 } else {
-                                    mm.sendDocumentMedia(caption, mediaUrl, filename, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion,wpClientId, botId, userId,planId, (error, result) => {
+                                    mm.sendDocumentMedia(caption, mediaUrl, filename, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, wpClientId, botId, userId, planId, (error, result) => {
                                         if (error) {
                                             console.log("Failed to send Document message: ", error);
                                             callbackFunction('Failed to send Document message');
@@ -233,12 +248,14 @@ const greetMessage = async (message, userMobileNo, phoneNumberId, permanentAcces
                                 }
                             } else if (scriptData.messageType === "BUTTON") {
                                 let messageContent = scriptData.messageDraft
+                                // let messageContent = await translateLanguageFunc(scriptData.messageDraft, selectLanguage)
                                 let manyInsertArray = []
                                 let listData = []
                                 let arrayData = scriptData.buttonOrListData
                                 if (arrayData.length > 0) {
                                     for (let i = 0; i < arrayData.length; i++) {
                                         const element = arrayData[i];
+                                        // const trans = await translateLanguageFunc(element.optionName, selectLanguage)
                                         const object = {
                                             botId: botId,
                                             userId: userId,
@@ -259,12 +276,12 @@ const greetMessage = async (message, userMobileNo, phoneNumberId, permanentAcces
                                         }
                                         listData.push(listObject)
                                     }
-    
+
                                     const insertAdminChatHistory = await userChatHistory.insertMany(manyInsertArray)
                                     if (!insertAdminChatHistory) {
                                         callbackFunction("Failed to Insert Admin chat history")
                                     } else {
-                                        mm.sendInteractiveButtonMSG(messageContent, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, listData,wpClientId, botId, userId,planId, (error, result) => {
+                                        mm.sendInteractiveButtonMSG(messageContent, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, listData, wpClientId, botId, userId, planId, (error, result) => {
                                             if (error) {
                                                 console.log("Failed to send Button message: ", error);
                                                 callbackFunction('Failed to send Button message');
@@ -283,20 +300,21 @@ const greetMessage = async (message, userMobileNo, phoneNumberId, permanentAcces
                                     callbackFunction("Not Found buttonOrListData")
                                 }
                             } else if (scriptData.messageType === "LIST") {
-                                let messageContent = scriptData.messageDraft,
-                                    buttonText = scriptData.listButtonName,
+                                let messageContent = await translateLanguageFunc(scriptData.messageDraft, selectLanguage)
+                                buttonText = await translateLanguageFunc(scriptData.listButtonName, selectLanguage),
                                     listData = [],
                                     manyInsertArray = [],
                                     arrayData = scriptData.buttonOrListData
                                 if (arrayData.length > 0) {
                                     for (let i = 0; i < arrayData.length; i++) {
                                         const element = arrayData[i];
+                                        const trans = await translateLanguageFunc(element.optionName, selectLanguage)
                                         const object = {
                                             botId: botId,
                                             userId: userId,
                                             userMobileNo: userMobileNo,
                                             sender: "A",
-                                            messageContent: element.optionName,
+                                            messageContent: trans,
                                             messageDatetime: new Date(),
                                             mainRedirectId: element.id + "_" + (i + 1),
                                             redirectId: element.id + "_" + (i + 1),
@@ -307,19 +325,18 @@ const greetMessage = async (message, userMobileNo, phoneNumberId, permanentAcces
                                         manyInsertArray.push(object)
                                         const listObject = {
                                             id: element.id + "_" + (i + 1),
-                                            optionName: element.optionName
+                                            optionName: trans
                                         }
                                         listData.push(listObject)
-    
+
                                     }
-    
+
                                     console.log("listData: ", listData);
                                     const insertAdminChatHistory = await userChatHistory.insertMany(manyInsertArray)
                                     if (!insertAdminChatHistory) {
                                         callbackFunction("Failed to Insert Admin chat history")
                                     }
-    
-                                    mm.sendInteractiveListMSGNew(messageContent, buttonText, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, listData,wpClientId, botId, userId,planId, (error, result) => {
+                                    mm.sendInteractiveListMSGNew(messageContent, buttonText, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, listData, wpClientId, botId, userId, planId, (error, result) => {
                                         if (error) {
                                             console.log("Failed to send Button message: ", error);
                                             callbackFunction('Failed to send Button message');
@@ -346,7 +363,7 @@ const greetMessage = async (message, userMobileNo, phoneNumberId, permanentAcces
                                 } else {
                                     keys.push("")
                                 }
-    
+
                                 const resultInputData = await userInputData.find({ botId: botId, mobileNo: userMobileNo, variableName: { $in: keys } }).select({ selectedValue: 1, variableName: 1, _id: 0 })
                                 Object.keys(bodyParams).forEach((key) => {
                                     for (let i = 0; i < resultInputData.length; i++) {
@@ -356,7 +373,7 @@ const greetMessage = async (message, userMobileNo, phoneNumberId, permanentAcces
                                         }
                                     }
                                 })
-    
+
                                 const newObject = {
                                     ...bodyParams,
                                     ...limitObject
@@ -381,7 +398,7 @@ const greetMessage = async (message, userMobileNo, phoneNumberId, permanentAcces
                                             fileUrl = scriptData?.sampleDataKey?.fileUrl;
                                             if (body[dataKey].length > 0) {
                                                 if (scriptData.messageSubType === "TEXT") {
-                                                    let messageContent = scriptData.messageDraft
+                                                    let messageContent = await translateLanguageFunc(scriptData.messageDraft, selectLanguage)
                                                     const keyData = await flattenCartData(body[dataKey], messageContent, dataName, dataId, "", "")
                                                     const insertAdminChatHistory = await userChatHistory.create({
                                                         botId: botId,
@@ -399,7 +416,7 @@ const greetMessage = async (message, userMobileNo, phoneNumberId, permanentAcces
                                                     if (!insertAdminChatHistory) {
                                                         callbackFunction("Failed to Insert Admin chat history")
                                                     } else {
-                                                        mm.sendMSG(keyData.stringValue, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion,wpClientId, botId, userId,planId, (error, result) => {
+                                                        mm.sendMSG(keyData.stringValue, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, wpClientId, botId, userId, planId, (error, result) => {
                                                             if (error) {
                                                                 console.log("Error in get method: ", error);
                                                                 callbackFunction('Failed to send message');
@@ -415,13 +432,13 @@ const greetMessage = async (message, userMobileNo, phoneNumberId, permanentAcces
                                                         });
                                                     }
                                                 } else if (scriptData.messageSubType === "LIST") {
-                                                    let messageContent = scriptData.messageDraft,
-                                                        buttonText = scriptData.listButtonName,
+                                                    let messageContent = await translateLanguageFunc(scriptData.messageDraft, selectLanguage),
+                                                        buttonText = await translateLanguageFunc(scriptData.listButtonName, selectLanguage),
                                                         listData = [],
                                                         manyInsertArray = []
                                                     for (let i = 0; i < body[dataKey].length; i++) {
                                                         const element = body[dataKey][i];
-    
+
                                                         const object = {
                                                             botId: botId,
                                                             userId: userId,
@@ -438,17 +455,17 @@ const greetMessage = async (message, userMobileNo, phoneNumberId, permanentAcces
                                                         manyInsertArray.push(object)
                                                         const listObject = {
                                                             id: scriptData.redirectId + "_" + (i + 1),
-                                                            optionName: element[dataName],
-                                                            desc: element[dataDesc]
+                                                            optionName: await translateLanguageFunc(element[dataName], selectLanguage),
+                                                            desc: await translateLanguageFunc(element[dataDesc], selectLanguage)
                                                         }
                                                         listData.push(listObject)
                                                     }
-    
+
                                                     const insertAdminChatHistory = await userChatHistory.insertMany(manyInsertArray)
                                                     if (!insertAdminChatHistory) {
                                                         callbackFunction("Failed to Insert Admin chat history")
                                                     } else {
-                                                        mm.sendInteractiveListMSGNew(messageContent, buttonText, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, listData,wpClientId, botId, userId,planId, (error, result) => {
+                                                        mm.sendInteractiveListMSGNew(messageContent, buttonText, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, listData, wpClientId, botId, userId, planId, (error, result) => {
                                                             if (error) {
                                                                 console.log("Failed to send Button message: ", error);
                                                                 callbackFunction('Failed to send Button message');
@@ -464,12 +481,12 @@ const greetMessage = async (message, userMobileNo, phoneNumberId, permanentAcces
                                                         });
                                                     }
                                                 } else if (scriptData.messageSubType === "DOCUMENT") {
-    
+
                                                     const keyData = await flattenCartData(body[dataKey], scriptData.messageDraft, dataName, dataId, fileUrl, "")
-    
-    
+
+
                                                     console.log("keyData", keyData);
-                                                    let caption = keyData.stringValue,
+                                                    let caption = await translateLanguageFunc(keyData.stringValue, selectLanguage),
                                                         mediaUrl = keyData.fileUrlValue,
                                                         filename = Date.now()
                                                     const insertAdminChatHistory = await userChatHistory.create({
@@ -489,7 +506,7 @@ const greetMessage = async (message, userMobileNo, phoneNumberId, permanentAcces
                                                     if (!insertAdminChatHistory) {
                                                         callbackFunction("Failed to Insert Admin chat history")
                                                     } else {
-                                                        mm.sendDocumentMedia(caption, mediaUrl, filename, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion,wpClientId, botId, userId,planId, (error, result) => {
+                                                        mm.sendDocumentMedia(caption, mediaUrl, filename, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, wpClientId, botId, userId, planId, (error, result) => {
                                                             if (error) {
                                                                 console.log("Failed to send Document message: ", error);
                                                                 callbackFunction('Failed to send Document message');
@@ -510,7 +527,7 @@ const greetMessage = async (message, userMobileNo, phoneNumberId, permanentAcces
                                             } else {
                                                 callbackFunction("No Data Found")
                                             }
-    
+
                                         } else {
                                             callbackFunction("Failed to send API Data")
                                         }
@@ -520,9 +537,9 @@ const greetMessage = async (message, userMobileNo, phoneNumberId, permanentAcces
                                 callbackFunction("messageType not matched")
                             }
                         }
-    
+
                     }
-    
+
                     processScript()
                 }
             }
@@ -534,7 +551,7 @@ const greetMessage = async (message, userMobileNo, phoneNumberId, permanentAcces
 }
 
 // if user type text
-const textMessage = async (message, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, wpClientId, botId, userId,planId,  callbackFunction) => {
+const textMessage = async (message, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, wpClientId, botId, userId, planId, callbackFunction) => {
     try {
         const userChatHistorys = await userChatHistory.findOne({ userMobileNo: userMobileNo, botId: botId, }).sort({ _id: -1 }).limit(1)
         if (userChatHistorys) {
@@ -587,7 +604,7 @@ const textMessage = async (message, userMobileNo, phoneNumberId, permanentAccess
                                     callbackFunction("Chat script not found")
                                 } else {
                                     if (scriptData.messageType === "TEXT") {
-                                        let messageContent = scriptData.messageDraft
+                                        let messageContent = await translateLanguageFunc(scriptData.messageDraft, selectLanguage)
                                         const insertAdminChatHistory = await userChatHistory.create({
                                             botId: botId,
                                             userId: userId,
@@ -604,7 +621,7 @@ const textMessage = async (message, userMobileNo, phoneNumberId, permanentAccess
                                         if (!insertAdminChatHistory) {
                                             callbackFunction("Failed to Insert Admin chat history")
                                         } else {
-                                            mm.sendMSG(messageContent, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion,wpClientId, botId, userId,planId, (error, result) => {
+                                            mm.sendMSG(messageContent, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, wpClientId, botId, userId, planId, (error, result) => {
                                                 if (error) {
                                                     console.log("Error in get method: ", error);
                                                     callbackFunction('Failed to send message');
@@ -620,7 +637,7 @@ const textMessage = async (message, userMobileNo, phoneNumberId, permanentAccess
                                             });
                                         }
                                     } else if (scriptData.messageType === "IMAGE") {
-                                        let caption = scriptData.messageDraft,
+                                        let caption = await translateLanguageFunc(scriptData.messageDraft, selectLanguage),
                                             mediaUrl = scriptData.mediaUrl
                                         const insertAdminChatHistory = await userChatHistory.create({
                                             botId: botId,
@@ -639,7 +656,7 @@ const textMessage = async (message, userMobileNo, phoneNumberId, permanentAccess
                                         if (!insertAdminChatHistory) {
                                             callbackFunction("Failed to Insert Admin chat history")
                                         } else {
-                                            mm.sendMSGWithImage(mediaUrl, caption, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion,wpClientId, botId, userId,planId, (error, result) => {
+                                            mm.sendMSGWithImage(mediaUrl, caption, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, wpClientId, botId, userId, planId, (error, result) => {
                                                 if (error) {
                                                     console.log("Failed to send image message: ", error);
                                                     callbackFunction('Failed to send image message');
@@ -654,10 +671,10 @@ const textMessage = async (message, userMobileNo, phoneNumberId, permanentAccess
                                                 }
                                             });
                                         }
-            
-            
+
+
                                     } else if (scriptData.messageType === "DOCUMENT") {
-                                        let caption = scriptData.messageDraft,
+                                        let caption = await translateLanguageFunc(scriptData.messageDraft, selectLanguage),
                                             mediaUrl = scriptData.mediaUrl,
                                             filename = Date.now()
                                         const insertAdminChatHistory = await userChatHistory.create({
@@ -677,7 +694,7 @@ const textMessage = async (message, userMobileNo, phoneNumberId, permanentAccess
                                         if (!insertAdminChatHistory) {
                                             callbackFunction("Failed to Insert Admin chat history")
                                         } else {
-                                            mm.sendDocumentMedia(caption, mediaUrl, filename, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion,wpClientId, botId, userId,planId, (error, result) => {
+                                            mm.sendDocumentMedia(caption, mediaUrl, filename, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, wpClientId, botId, userId, planId, (error, result) => {
                                                 if (error) {
                                                     console.log("Failed to send Document message: ", error);
                                                     callbackFunction('Failed to send Document message');
@@ -693,19 +710,20 @@ const textMessage = async (message, userMobileNo, phoneNumberId, permanentAccess
                                             });
                                         }
                                     } else if (scriptData.messageType === "BUTTON") {
-                                        let messageContent = scriptData.messageDraft
+                                        let messageContent = await translateLanguageFunc(scriptData.messageDraft, selectLanguage)
                                         let manyInsertArray = []
                                         let listData = []
                                         let arrayData = scriptData.buttonOrListData
                                         if (arrayData.length > 0) {
                                             for (let i = 0; i < arrayData.length; i++) {
                                                 const element = arrayData[i];
+                                                const trans = await translateLanguageFunc(element.optionName, selectLanguage)
                                                 const object = {
                                                     botId: botId,
                                                     userId: userId,
                                                     userMobileNo: userMobileNo,
                                                     sender: "A",
-                                                    messageContent: element.optionName,
+                                                    messageContent: trans,
                                                     messageDatetime: new Date(),
                                                     mainRedirectId: element.id + "_" + (i + 1),
                                                     redirectId: element.id + "_" + (i + 1),
@@ -716,16 +734,16 @@ const textMessage = async (message, userMobileNo, phoneNumberId, permanentAccess
                                                 manyInsertArray.push(object)
                                                 const listObject = {
                                                     id: element.id + "_" + (i + 1),
-                                                    optionName: element.optionName
+                                                    optionName: trans
                                                 }
                                                 listData.push(listObject)
                                             }
-            
+
                                             const insertAdminChatHistory = await userChatHistory.insertMany(manyInsertArray)
                                             if (!insertAdminChatHistory) {
                                                 callbackFunction("Failed to Insert Admin chat history")
                                             } else {
-                                                mm.sendInteractiveButtonMSG(messageContent, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, listData,wpClientId, botId, userId,planId, (error, result) => {
+                                                mm.sendInteractiveButtonMSG(messageContent, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, listData, wpClientId, botId, userId, planId, (error, result) => {
                                                     if (error) {
                                                         console.log("Failed to send Button message: ", error);
                                                         callbackFunction('Failed to send Button message');
@@ -744,20 +762,21 @@ const textMessage = async (message, userMobileNo, phoneNumberId, permanentAccess
                                             callbackFunction("Not Found buttonOrListData")
                                         }
                                     } else if (scriptData.messageType === "LIST") {
-                                        let messageContent = scriptData.messageDraft,
-                                            buttonText = scriptData.listButtonName,
+                                        let messageContent = await translateLanguageFunc(scriptData.messageDraft, selectLanguage)
+                                        buttonText = await translateLanguageFunc(scriptData.listButtonName, selectLanguage),
                                             listData = [],
                                             manyInsertArray = [],
                                             arrayData = scriptData.buttonOrListData
                                         if (arrayData.length > 0) {
                                             for (let i = 0; i < arrayData.length; i++) {
                                                 const element = arrayData[i];
+                                                const trans = await translateLanguageFunc(element.optionName, selectLanguage)
                                                 const object = {
                                                     botId: botId,
                                                     userId: userId,
                                                     userMobileNo: userMobileNo,
                                                     sender: "A",
-                                                    messageContent: element.optionName,
+                                                    messageContent: trans,
                                                     messageDatetime: new Date(),
                                                     mainRedirectId: element.id + "_" + (i + 1),
                                                     redirectId: element.id + "_" + (i + 1),
@@ -768,19 +787,18 @@ const textMessage = async (message, userMobileNo, phoneNumberId, permanentAccess
                                                 manyInsertArray.push(object)
                                                 const listObject = {
                                                     id: element.id + "_" + (i + 1),
-                                                    optionName: element.optionName
+                                                    optionName: trans
                                                 }
                                                 listData.push(listObject)
-            
+
                                             }
-            
+
                                             console.log("listData: ", listData);
                                             const insertAdminChatHistory = await userChatHistory.insertMany(manyInsertArray)
                                             if (!insertAdminChatHistory) {
                                                 callbackFunction("Failed to Insert Admin chat history")
                                             }
-            
-                                            mm.sendInteractiveListMSGNew(messageContent, buttonText, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, listData,wpClientId, botId, userId,planId, (error, result) => {
+                                            mm.sendInteractiveListMSGNew(messageContent, buttonText, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, listData, wpClientId, botId, userId, planId, (error, result) => {
                                                 if (error) {
                                                     console.log("Failed to send Button message: ", error);
                                                     callbackFunction('Failed to send Button message');
@@ -807,7 +825,7 @@ const textMessage = async (message, userMobileNo, phoneNumberId, permanentAccess
                                         } else {
                                             keys.push("")
                                         }
-            
+
                                         const resultInputData = await userInputData.find({ botId: botId, mobileNo: userMobileNo, variableName: { $in: keys } }).select({ selectedValue: 1, variableName: 1, _id: 0 })
                                         Object.keys(bodyParams).forEach((key) => {
                                             for (let i = 0; i < resultInputData.length; i++) {
@@ -817,7 +835,7 @@ const textMessage = async (message, userMobileNo, phoneNumberId, permanentAccess
                                                 }
                                             }
                                         })
-            
+
                                         const newObject = {
                                             ...bodyParams,
                                             ...limitObject
@@ -842,7 +860,7 @@ const textMessage = async (message, userMobileNo, phoneNumberId, permanentAccess
                                                     fileUrl = scriptData?.sampleDataKey?.fileUrl;
                                                     if (body[dataKey].length > 0) {
                                                         if (scriptData.messageSubType === "TEXT") {
-                                                            let messageContent = scriptData.messageDraft
+                                                            let messageContent = await translateLanguageFunc(scriptData.messageDraft, selectLanguage)
                                                             const keyData = await flattenCartData(body[dataKey], messageContent, dataName, dataId, "", "")
                                                             const insertAdminChatHistory = await userChatHistory.create({
                                                                 botId: botId,
@@ -860,7 +878,7 @@ const textMessage = async (message, userMobileNo, phoneNumberId, permanentAccess
                                                             if (!insertAdminChatHistory) {
                                                                 callbackFunction("Failed to Insert Admin chat history")
                                                             } else {
-                                                                mm.sendMSG(keyData.stringValue, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion,wpClientId, botId, userId,planId, (error, result) => {
+                                                                mm.sendMSG(keyData.stringValue, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, wpClientId, botId, userId, planId, (error, result) => {
                                                                     if (error) {
                                                                         console.log("Error in get method: ", error);
                                                                         callbackFunction('Failed to send message');
@@ -876,13 +894,13 @@ const textMessage = async (message, userMobileNo, phoneNumberId, permanentAccess
                                                                 });
                                                             }
                                                         } else if (scriptData.messageSubType === "LIST") {
-                                                            let messageContent = scriptData.messageDraft,
-                                                                buttonText = scriptData.listButtonName,
+                                                            let messageContent = await translateLanguageFunc(scriptData.messageDraft, selectLanguage),
+                                                                buttonText = await translateLanguageFunc(scriptData.listButtonName, selectLanguage),
                                                                 listData = [],
                                                                 manyInsertArray = []
                                                             for (let i = 0; i < body[dataKey].length; i++) {
                                                                 const element = body[dataKey][i];
-            
+
                                                                 const object = {
                                                                     botId: botId,
                                                                     userId: userId,
@@ -899,17 +917,17 @@ const textMessage = async (message, userMobileNo, phoneNumberId, permanentAccess
                                                                 manyInsertArray.push(object)
                                                                 const listObject = {
                                                                     id: scriptData.redirectId + "_" + (i + 1),
-                                                                    optionName: element[dataName],
-                                                                    desc: element[dataDesc]
+                                                                    optionName: await translateLanguageFunc(element[dataName], selectLanguage),
+                                                                    desc: await translateLanguageFunc(element[dataDesc], selectLanguage)
                                                                 }
                                                                 listData.push(listObject)
                                                             }
-            
+
                                                             const insertAdminChatHistory = await userChatHistory.insertMany(manyInsertArray)
                                                             if (!insertAdminChatHistory) {
                                                                 callbackFunction("Failed to Insert Admin chat history")
                                                             } else {
-                                                                mm.sendInteractiveListMSGNew(messageContent, buttonText, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, listData,wpClientId, botId, userId,planId, (error, result) => {
+                                                                mm.sendInteractiveListMSGNew(messageContent, buttonText, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, listData, wpClientId, botId, userId, planId, (error, result) => {
                                                                     if (error) {
                                                                         console.log("Failed to send Button message: ", error);
                                                                         callbackFunction('Failed to send Button message');
@@ -925,12 +943,12 @@ const textMessage = async (message, userMobileNo, phoneNumberId, permanentAccess
                                                                 });
                                                             }
                                                         } else if (scriptData.messageSubType === "DOCUMENT") {
-            
+
                                                             const keyData = await flattenCartData(body[dataKey], scriptData.messageDraft, dataName, dataId, fileUrl, "")
-            
-            
+
+
                                                             console.log("keyData", keyData);
-                                                            let caption = keyData.stringValue,
+                                                            let caption = await translateLanguageFunc(keyData.stringValue, selectLanguage),
                                                                 mediaUrl = keyData.fileUrlValue,
                                                                 filename = Date.now()
                                                             const insertAdminChatHistory = await userChatHistory.create({
@@ -950,7 +968,7 @@ const textMessage = async (message, userMobileNo, phoneNumberId, permanentAccess
                                                             if (!insertAdminChatHistory) {
                                                                 callbackFunction("Failed to Insert Admin chat history")
                                                             } else {
-                                                                mm.sendDocumentMedia(caption, mediaUrl, filename, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion,wpClientId, botId, userId,planId, (error, result) => {
+                                                                mm.sendDocumentMedia(caption, mediaUrl, filename, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, wpClientId, botId, userId, planId, (error, result) => {
                                                                     if (error) {
                                                                         console.log("Failed to send Document message: ", error);
                                                                         callbackFunction('Failed to send Document message');
@@ -971,7 +989,7 @@ const textMessage = async (message, userMobileNo, phoneNumberId, permanentAccess
                                                     } else {
                                                         callbackFunction("No Data Found")
                                                     }
-            
+
                                                 } else {
                                                     callbackFunction("Failed to send API Data")
                                                 }
@@ -981,16 +999,17 @@ const textMessage = async (message, userMobileNo, phoneNumberId, permanentAccess
                                         callbackFunction("messageType not matched")
                                     }
                                 }
-            
+
                             }
-            
+
                             processScript()
                         }
                     }
                 } else {
                     // restart the chat logic here
                     console.log("Restarting Not Found");
-                    mm.sendMSG("Please Enter/Select Valid input", userMobileNo, phoneNumberId, permanentAccessToken, apiVersion,wpClientId, botId, userId,planId, (error, result) => {
+                    const res1 = await translateLanguageFunc("Please Enter/Select Valid input", selectLanguage)
+                    mm.sendMSG(res1, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, wpClientId, botId, userId, planId, (error, result) => {
                         if (error) {
                             console.log("Error in get method: ", error);
                             callbackFunction('Failed to send validation message');
@@ -1022,7 +1041,7 @@ const textMessage = async (message, userMobileNo, phoneNumberId, permanentAccess
 }
 
 // if user reply from button
-const buttonMessage = async (redirectSelectedId, selectedOption, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, wpClientId, botId, userId,planId, callbackFunction) => {
+const buttonMessage = async (redirectSelectedId, selectedOption, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, wpClientId, botId, userId, planId, callbackFunction) => {
     try {
         const userChatHistorys = await userChatHistory.findOne({ userMobileNo: userMobileNo, botId: botId, redirectId: redirectSelectedId }).sort({ _id: -1 }).limit(1)
         let redirectIdNew = userChatHistorys?.mainRedirectId ? userChatHistorys?.mainRedirectId : userChatHistorys?.redirectId
@@ -1055,7 +1074,7 @@ const buttonMessage = async (redirectSelectedId, selectedOption, userMobileNo, p
                         callbackFunction("Chat script not found")
                     } else {
                         if (scriptData.messageType === "TEXT") {
-                            let messageContent = scriptData.messageDraft
+                            let messageContent = await translateLanguageFunc(scriptData.messageDraft, selectLanguage)
                             const insertAdminChatHistory = await userChatHistory.create({
                                 botId: botId,
                                 userId: userId,
@@ -1072,7 +1091,7 @@ const buttonMessage = async (redirectSelectedId, selectedOption, userMobileNo, p
                             if (!insertAdminChatHistory) {
                                 callbackFunction("Failed to Insert Admin chat history")
                             } else {
-                                mm.sendMSG(messageContent, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion,wpClientId, botId, userId,planId, (error, result) => {
+                                mm.sendMSG(messageContent, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, wpClientId, botId, userId, planId, (error, result) => {
                                     if (error) {
                                         console.log("Error in get method: ", error);
                                         callbackFunction('Failed to send message');
@@ -1088,7 +1107,7 @@ const buttonMessage = async (redirectSelectedId, selectedOption, userMobileNo, p
                                 });
                             }
                         } else if (scriptData.messageType === "IMAGE") {
-                            let caption = scriptData.messageDraft,
+                            let caption = await translateLanguageFunc(scriptData.messageDraft, selectLanguage),
                                 mediaUrl = scriptData.mediaUrl
                             const insertAdminChatHistory = await userChatHistory.create({
                                 botId: botId,
@@ -1107,7 +1126,7 @@ const buttonMessage = async (redirectSelectedId, selectedOption, userMobileNo, p
                             if (!insertAdminChatHistory) {
                                 callbackFunction("Failed to Insert Admin chat history")
                             } else {
-                                mm.sendMSGWithImage(mediaUrl, caption, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion,wpClientId, botId, userId,planId, (error, result) => {
+                                mm.sendMSGWithImage(mediaUrl, caption, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, wpClientId, botId, userId, planId, (error, result) => {
                                     if (error) {
                                         console.log("Failed to send image message: ", error);
                                         callbackFunction('Failed to send image message');
@@ -1125,7 +1144,7 @@ const buttonMessage = async (redirectSelectedId, selectedOption, userMobileNo, p
 
 
                         } else if (scriptData.messageType === "DOCUMENT") {
-                            let caption = scriptData.messageDraft,
+                            let caption = await translateLanguageFunc(scriptData.messageDraft, selectLanguage),
                                 mediaUrl = scriptData.mediaUrl,
                                 filename = Date.now()
                             const insertAdminChatHistory = await userChatHistory.create({
@@ -1145,7 +1164,7 @@ const buttonMessage = async (redirectSelectedId, selectedOption, userMobileNo, p
                             if (!insertAdminChatHistory) {
                                 callbackFunction("Failed to Insert Admin chat history")
                             } else {
-                                mm.sendDocumentMedia(caption, mediaUrl, filename, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion,wpClientId, botId, userId,planId, (error, result) => {
+                                mm.sendDocumentMedia(caption, mediaUrl, filename, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, wpClientId, botId, userId, planId, (error, result) => {
                                     if (error) {
                                         console.log("Failed to send Document message: ", error);
                                         callbackFunction('Failed to send Document message');
@@ -1161,19 +1180,20 @@ const buttonMessage = async (redirectSelectedId, selectedOption, userMobileNo, p
                                 });
                             }
                         } else if (scriptData.messageType === "BUTTON") {
-                            let messageContent = scriptData.messageDraft
+                            let messageContent = await translateLanguageFunc(scriptData.messageDraft, selectLanguage)
                             let manyInsertArray = []
                             let listData = []
                             let arrayData = scriptData.buttonOrListData
                             if (arrayData.length > 0) {
                                 for (let i = 0; i < arrayData.length; i++) {
                                     const element = arrayData[i];
+                                    const trans = await translateLanguageFunc(element.optionName, selectLanguage)
                                     const object = {
                                         botId: botId,
                                         userId: userId,
                                         userMobileNo: userMobileNo,
                                         sender: "A",
-                                        messageContent: element.optionName,
+                                        messageContent: trans,
                                         messageDatetime: new Date(),
                                         mainRedirectId: element.id + "_" + (i + 1),
                                         redirectId: element.id + "_" + (i + 1),
@@ -1184,7 +1204,7 @@ const buttonMessage = async (redirectSelectedId, selectedOption, userMobileNo, p
                                     manyInsertArray.push(object)
                                     const listObject = {
                                         id: element.id + "_" + (i + 1),
-                                        optionName: element.optionName
+                                        optionName: trans
                                     }
                                     listData.push(listObject)
                                 }
@@ -1193,7 +1213,7 @@ const buttonMessage = async (redirectSelectedId, selectedOption, userMobileNo, p
                                 if (!insertAdminChatHistory) {
                                     callbackFunction("Failed to Insert Admin chat history")
                                 } else {
-                                    mm.sendInteractiveButtonMSG(messageContent, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, listData,wpClientId, botId, userId,planId, (error, result) => {
+                                    mm.sendInteractiveButtonMSG(messageContent, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, listData, wpClientId, botId, userId, planId, (error, result) => {
                                         if (error) {
                                             console.log("Failed to send Button message: ", error);
                                             callbackFunction('Failed to send Button message');
@@ -1212,20 +1232,21 @@ const buttonMessage = async (redirectSelectedId, selectedOption, userMobileNo, p
                                 callbackFunction("Not Found buttonOrListData")
                             }
                         } else if (scriptData.messageType === "LIST") {
-                            let messageContent = scriptData.messageDraft,
-                                buttonText = scriptData.listButtonName,
+                            let messageContent = await translateLanguageFunc(scriptData.messageDraft, selectLanguage)
+                            buttonText = await translateLanguageFunc(scriptData.listButtonName, selectLanguage),
                                 listData = [],
                                 manyInsertArray = [],
                                 arrayData = scriptData.buttonOrListData
                             if (arrayData.length > 0) {
                                 for (let i = 0; i < arrayData.length; i++) {
                                     const element = arrayData[i];
+                                    const trans = await translateLanguageFunc(element.optionName, selectLanguage)
                                     const object = {
                                         botId: botId,
                                         userId: userId,
                                         userMobileNo: userMobileNo,
                                         sender: "A",
-                                        messageContent: element.optionName,
+                                        messageContent: trans,
                                         messageDatetime: new Date(),
                                         mainRedirectId: element.id + "_" + (i + 1),
                                         redirectId: element.id + "_" + (i + 1),
@@ -1236,7 +1257,7 @@ const buttonMessage = async (redirectSelectedId, selectedOption, userMobileNo, p
                                     manyInsertArray.push(object)
                                     const listObject = {
                                         id: element.id + "_" + (i + 1),
-                                        optionName: element.optionName
+                                        optionName: trans
                                     }
                                     listData.push(listObject)
 
@@ -1247,8 +1268,7 @@ const buttonMessage = async (redirectSelectedId, selectedOption, userMobileNo, p
                                 if (!insertAdminChatHistory) {
                                     callbackFunction("Failed to Insert Admin chat history")
                                 }
-
-                                mm.sendInteractiveListMSGNew(messageContent, buttonText, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, listData,wpClientId, botId, userId,planId, (error, result) => {
+                                mm.sendInteractiveListMSGNew(messageContent, buttonText, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, listData, wpClientId, botId, userId, planId, (error, result) => {
                                     if (error) {
                                         console.log("Failed to send Button message: ", error);
                                         callbackFunction('Failed to send Button message');
@@ -1310,7 +1330,7 @@ const buttonMessage = async (redirectSelectedId, selectedOption, userMobileNo, p
                                         fileUrl = scriptData?.sampleDataKey?.fileUrl;
                                         if (body[dataKey].length > 0) {
                                             if (scriptData.messageSubType === "TEXT") {
-                                                let messageContent = scriptData.messageDraft
+                                                let messageContent = await translateLanguageFunc(scriptData.messageDraft, selectLanguage)
                                                 const keyData = await flattenCartData(body[dataKey], messageContent, dataName, dataId, "", "")
                                                 const insertAdminChatHistory = await userChatHistory.create({
                                                     botId: botId,
@@ -1328,7 +1348,7 @@ const buttonMessage = async (redirectSelectedId, selectedOption, userMobileNo, p
                                                 if (!insertAdminChatHistory) {
                                                     callbackFunction("Failed to Insert Admin chat history")
                                                 } else {
-                                                    mm.sendMSG(keyData.stringValue, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion,wpClientId, botId, userId,planId, (error, result) => {
+                                                    mm.sendMSG(keyData.stringValue, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, wpClientId, botId, userId, planId, (error, result) => {
                                                         if (error) {
                                                             console.log("Error in get method: ", error);
                                                             callbackFunction('Failed to send message');
@@ -1344,8 +1364,8 @@ const buttonMessage = async (redirectSelectedId, selectedOption, userMobileNo, p
                                                     });
                                                 }
                                             } else if (scriptData.messageSubType === "LIST") {
-                                                let messageContent = scriptData.messageDraft,
-                                                    buttonText = scriptData.listButtonName,
+                                                let messageContent = await translateLanguageFunc(scriptData.messageDraft, selectLanguage),
+                                                    buttonText = await translateLanguageFunc(scriptData.listButtonName, selectLanguage),
                                                     listData = [],
                                                     manyInsertArray = []
                                                 for (let i = 0; i < body[dataKey].length; i++) {
@@ -1367,8 +1387,8 @@ const buttonMessage = async (redirectSelectedId, selectedOption, userMobileNo, p
                                                     manyInsertArray.push(object)
                                                     const listObject = {
                                                         id: scriptData.redirectId + "_" + (i + 1),
-                                                        optionName: element[dataName],
-                                                        desc: element[dataDesc]
+                                                        optionName: await translateLanguageFunc(element[dataName], selectLanguage),
+                                                        desc: await translateLanguageFunc(element[dataDesc], selectLanguage)
                                                     }
                                                     listData.push(listObject)
                                                 }
@@ -1377,7 +1397,7 @@ const buttonMessage = async (redirectSelectedId, selectedOption, userMobileNo, p
                                                 if (!insertAdminChatHistory) {
                                                     callbackFunction("Failed to Insert Admin chat history")
                                                 } else {
-                                                    mm.sendInteractiveListMSGNew(messageContent, buttonText, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, listData,wpClientId, botId, userId,planId, (error, result) => {
+                                                    mm.sendInteractiveListMSGNew(messageContent, buttonText, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, listData, wpClientId, botId, userId, planId, (error, result) => {
                                                         if (error) {
                                                             console.log("Failed to send Button message: ", error);
                                                             callbackFunction('Failed to send Button message');
@@ -1398,7 +1418,7 @@ const buttonMessage = async (redirectSelectedId, selectedOption, userMobileNo, p
 
 
                                                 console.log("keyData", keyData);
-                                                let caption = keyData.stringValue,
+                                                let caption = await translateLanguageFunc(keyData.stringValue, selectLanguage),
                                                     mediaUrl = keyData.fileUrlValue,
                                                     filename = Date.now()
                                                 const insertAdminChatHistory = await userChatHistory.create({
@@ -1418,7 +1438,7 @@ const buttonMessage = async (redirectSelectedId, selectedOption, userMobileNo, p
                                                 if (!insertAdminChatHistory) {
                                                     callbackFunction("Failed to Insert Admin chat history")
                                                 } else {
-                                                    mm.sendDocumentMedia(caption, mediaUrl, filename, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion,wpClientId, botId, userId,planId, (error, result) => {
+                                                    mm.sendDocumentMedia(caption, mediaUrl, filename, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, wpClientId, botId, userId, planId, (error, result) => {
                                                         if (error) {
                                                             console.log("Failed to send Document message: ", error);
                                                             callbackFunction('Failed to send Document message');
@@ -1462,7 +1482,7 @@ const buttonMessage = async (redirectSelectedId, selectedOption, userMobileNo, p
 }
 
 // if user reply from list message
-const ListMessage = async (redirectSelectedId, selectedOption, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, wpClientId, botId, userId,planId,  callbackFunction) => {
+const ListMessage = async (redirectSelectedId, selectedOption, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, wpClientId, botId, userId, planId, callbackFunction) => {
     try {
         const userChatHistorys = await userChatHistory.findOne({ userMobileNo: userMobileNo, botId: botId, redirectId: redirectSelectedId }).sort({ _id: -1 }).limit(1)
         let redirectIdNew = userChatHistorys?.mainRedirectId ? userChatHistorys?.mainRedirectId : userChatHistorys?.redirectId
@@ -1496,7 +1516,7 @@ const ListMessage = async (redirectSelectedId, selectedOption, userMobileNo, pho
                         callbackFunction("Chat script not found")
                     } else {
                         if (scriptData.messageType === "TEXT") {
-                            let messageContent = scriptData.messageDraft
+                            let messageContent = await translateLanguageFunc(scriptData.messageDraft, selectLanguage)
                             const insertAdminChatHistory = await userChatHistory.create({
                                 botId: botId,
                                 userId: userId,
@@ -1513,7 +1533,7 @@ const ListMessage = async (redirectSelectedId, selectedOption, userMobileNo, pho
                             if (!insertAdminChatHistory) {
                                 callbackFunction("Failed to Insert Admin chat history")
                             } else {
-                                mm.sendMSG(messageContent, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion,wpClientId, botId, userId,planId, (error, result) => {
+                                mm.sendMSG(messageContent, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, wpClientId, botId, userId, planId, (error, result) => {
                                     if (error) {
                                         console.log("Error in get method: ", error);
                                         callbackFunction('Failed to send message');
@@ -1529,7 +1549,7 @@ const ListMessage = async (redirectSelectedId, selectedOption, userMobileNo, pho
                                 });
                             }
                         } else if (scriptData.messageType === "IMAGE") {
-                            let caption = scriptData.messageDraft,
+                            let caption = await translateLanguageFunc(scriptData.messageDraft, selectLanguage),
                                 mediaUrl = scriptData.mediaUrl
                             const insertAdminChatHistory = await userChatHistory.create({
                                 botId: botId,
@@ -1548,7 +1568,7 @@ const ListMessage = async (redirectSelectedId, selectedOption, userMobileNo, pho
                             if (!insertAdminChatHistory) {
                                 callbackFunction("Failed to Insert Admin chat history")
                             } else {
-                                mm.sendMSGWithImage(mediaUrl, caption, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion,wpClientId, botId, userId,planId, (error, result) => {
+                                mm.sendMSGWithImage(mediaUrl, caption, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, wpClientId, botId, userId, planId, (error, result) => {
                                     if (error) {
                                         console.log("Failed to send image message: ", error);
                                         callbackFunction('Failed to send image message');
@@ -1566,7 +1586,7 @@ const ListMessage = async (redirectSelectedId, selectedOption, userMobileNo, pho
 
 
                         } else if (scriptData.messageType === "DOCUMENT") {
-                            let caption = scriptData.messageDraft,
+                            let caption = await translateLanguageFunc(scriptData.messageDraft, selectLanguage),
                                 mediaUrl = scriptData.mediaUrl,
                                 filename = Date.now()
                             const insertAdminChatHistory = await userChatHistory.create({
@@ -1586,7 +1606,7 @@ const ListMessage = async (redirectSelectedId, selectedOption, userMobileNo, pho
                             if (!insertAdminChatHistory) {
                                 callbackFunction("Failed to Insert Admin chat history")
                             } else {
-                                mm.sendDocumentMedia(caption, mediaUrl, filename, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion,wpClientId, botId, userId,planId, (error, result) => {
+                                mm.sendDocumentMedia(caption, mediaUrl, filename, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, wpClientId, botId, userId, planId, (error, result) => {
                                     if (error) {
                                         console.log("Failed to send Document message: ", error);
                                         callbackFunction('Failed to send Document message');
@@ -1602,19 +1622,20 @@ const ListMessage = async (redirectSelectedId, selectedOption, userMobileNo, pho
                                 });
                             }
                         } else if (scriptData.messageType === "BUTTON") {
-                            let messageContent = scriptData.messageDraft
+                            let messageContent = await translateLanguageFunc(scriptData.messageDraft, selectLanguage)
                             let manyInsertArray = []
                             let listData = []
                             let arrayData = scriptData.buttonOrListData
                             if (arrayData.length > 0) {
                                 for (let i = 0; i < arrayData.length; i++) {
                                     const element = arrayData[i];
+                                    const trans = await translateLanguageFunc(element.optionName, selectLanguage)
                                     const object = {
                                         botId: botId,
                                         userId: userId,
                                         userMobileNo: userMobileNo,
                                         sender: "A",
-                                        messageContent: element.optionName,
+                                        messageContent: trans,
                                         messageDatetime: new Date(),
                                         mainRedirectId: element.id + "_" + (i + 1),
                                         redirectId: element.id + "_" + (i + 1),
@@ -1625,7 +1646,7 @@ const ListMessage = async (redirectSelectedId, selectedOption, userMobileNo, pho
                                     manyInsertArray.push(object)
                                     const listObject = {
                                         id: element.id + "_" + (i + 1),
-                                        optionName: element.optionName
+                                        optionName: trans
                                     }
                                     listData.push(listObject)
                                 }
@@ -1634,7 +1655,7 @@ const ListMessage = async (redirectSelectedId, selectedOption, userMobileNo, pho
                                 if (!insertAdminChatHistory) {
                                     callbackFunction("Failed to Insert Admin chat history")
                                 } else {
-                                    mm.sendInteractiveButtonMSG(messageContent, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, listData,wpClientId, botId, userId,planId, (error, result) => {
+                                    mm.sendInteractiveButtonMSG(messageContent, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, listData, wpClientId, botId, userId, planId, (error, result) => {
                                         if (error) {
                                             console.log("Failed to send Button message: ", error);
                                             callbackFunction('Failed to send Button message');
@@ -1653,20 +1674,21 @@ const ListMessage = async (redirectSelectedId, selectedOption, userMobileNo, pho
                                 callbackFunction("Not Found buttonOrListData")
                             }
                         } else if (scriptData.messageType === "LIST") {
-                            let messageContent = scriptData.messageDraft,
-                                buttonText = scriptData.listButtonName,
+                            let messageContent = await translateLanguageFunc(scriptData.messageDraft, selectLanguage)
+                            buttonText = await translateLanguageFunc(scriptData.listButtonName, selectLanguage),
                                 listData = [],
                                 manyInsertArray = [],
                                 arrayData = scriptData.buttonOrListData
                             if (arrayData.length > 0) {
                                 for (let i = 0; i < arrayData.length; i++) {
                                     const element = arrayData[i];
+                                    const trans = await translateLanguageFunc(element.optionName, selectLanguage)
                                     const object = {
                                         botId: botId,
                                         userId: userId,
                                         userMobileNo: userMobileNo,
                                         sender: "A",
-                                        messageContent: element.optionName,
+                                        messageContent: trans,
                                         messageDatetime: new Date(),
                                         mainRedirectId: element.id + "_" + (i + 1),
                                         redirectId: element.id + "_" + (i + 1),
@@ -1677,7 +1699,7 @@ const ListMessage = async (redirectSelectedId, selectedOption, userMobileNo, pho
                                     manyInsertArray.push(object)
                                     const listObject = {
                                         id: element.id + "_" + (i + 1),
-                                        optionName: element.optionName
+                                        optionName: trans
                                     }
                                     listData.push(listObject)
 
@@ -1688,8 +1710,7 @@ const ListMessage = async (redirectSelectedId, selectedOption, userMobileNo, pho
                                 if (!insertAdminChatHistory) {
                                     callbackFunction("Failed to Insert Admin chat history")
                                 }
-
-                                mm.sendInteractiveListMSGNew(messageContent, buttonText, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, listData,wpClientId, botId, userId,planId, (error, result) => {
+                                mm.sendInteractiveListMSGNew(messageContent, buttonText, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, listData, wpClientId, botId, userId, planId, (error, result) => {
                                     if (error) {
                                         console.log("Failed to send Button message: ", error);
                                         callbackFunction('Failed to send Button message');
@@ -1751,7 +1772,7 @@ const ListMessage = async (redirectSelectedId, selectedOption, userMobileNo, pho
                                         fileUrl = scriptData?.sampleDataKey?.fileUrl;
                                         if (body[dataKey].length > 0) {
                                             if (scriptData.messageSubType === "TEXT") {
-                                                let messageContent = scriptData.messageDraft
+                                                let messageContent = await translateLanguageFunc(scriptData.messageDraft, selectLanguage)
                                                 const keyData = await flattenCartData(body[dataKey], messageContent, dataName, dataId, "", "")
                                                 const insertAdminChatHistory = await userChatHistory.create({
                                                     botId: botId,
@@ -1769,7 +1790,7 @@ const ListMessage = async (redirectSelectedId, selectedOption, userMobileNo, pho
                                                 if (!insertAdminChatHistory) {
                                                     callbackFunction("Failed to Insert Admin chat history")
                                                 } else {
-                                                    mm.sendMSG(keyData.stringValue, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion,wpClientId, botId, userId,planId, (error, result) => {
+                                                    mm.sendMSG(keyData.stringValue, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, wpClientId, botId, userId, planId, (error, result) => {
                                                         if (error) {
                                                             console.log("Error in get method: ", error);
                                                             callbackFunction('Failed to send message');
@@ -1785,8 +1806,8 @@ const ListMessage = async (redirectSelectedId, selectedOption, userMobileNo, pho
                                                     });
                                                 }
                                             } else if (scriptData.messageSubType === "LIST") {
-                                                let messageContent = scriptData.messageDraft,
-                                                    buttonText = scriptData.listButtonName,
+                                                let messageContent = await translateLanguageFunc(scriptData.messageDraft, selectLanguage),
+                                                    buttonText = await translateLanguageFunc(scriptData.listButtonName, selectLanguage),
                                                     listData = [],
                                                     manyInsertArray = []
                                                 for (let i = 0; i < body[dataKey].length; i++) {
@@ -1808,8 +1829,8 @@ const ListMessage = async (redirectSelectedId, selectedOption, userMobileNo, pho
                                                     manyInsertArray.push(object)
                                                     const listObject = {
                                                         id: scriptData.redirectId + "_" + (i + 1),
-                                                        optionName: element[dataName],
-                                                        desc: element[dataDesc]
+                                                        optionName: await translateLanguageFunc(element[dataName], selectLanguage),
+                                                        desc: await translateLanguageFunc(element[dataDesc], selectLanguage)
                                                     }
                                                     listData.push(listObject)
                                                 }
@@ -1818,7 +1839,7 @@ const ListMessage = async (redirectSelectedId, selectedOption, userMobileNo, pho
                                                 if (!insertAdminChatHistory) {
                                                     callbackFunction("Failed to Insert Admin chat history")
                                                 } else {
-                                                    mm.sendInteractiveListMSGNew(messageContent, buttonText, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, listData,wpClientId, botId, userId,planId, (error, result) => {
+                                                    mm.sendInteractiveListMSGNew(messageContent, buttonText, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, listData, wpClientId, botId, userId, planId, (error, result) => {
                                                         if (error) {
                                                             console.log("Failed to send Button message: ", error);
                                                             callbackFunction('Failed to send Button message');
@@ -1839,7 +1860,7 @@ const ListMessage = async (redirectSelectedId, selectedOption, userMobileNo, pho
 
 
                                                 console.log("keyData", keyData);
-                                                let caption = keyData.stringValue,
+                                                let caption = await translateLanguageFunc(keyData.stringValue, selectLanguage),
                                                     mediaUrl = keyData.fileUrlValue,
                                                     filename = Date.now()
                                                 const insertAdminChatHistory = await userChatHistory.create({
@@ -1859,7 +1880,7 @@ const ListMessage = async (redirectSelectedId, selectedOption, userMobileNo, pho
                                                 if (!insertAdminChatHistory) {
                                                     callbackFunction("Failed to Insert Admin chat history")
                                                 } else {
-                                                    mm.sendDocumentMedia(caption, mediaUrl, filename, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion,wpClientId, botId, userId,planId, (error, result) => {
+                                                    mm.sendDocumentMedia(caption, mediaUrl, filename, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, wpClientId, botId, userId, planId, (error, result) => {
                                                         if (error) {
                                                             console.log("Failed to send Document message: ", error);
                                                             callbackFunction('Failed to send Document message');
@@ -2099,7 +2120,7 @@ const restartMessage = async (restartId, errorMessage, from, phoneNumberId, perm
                             callbackFunction("Failed to Insert Admin chat history")
                         }
 
-                        mm.sendInteractiveListMSGNew(messageContent, buttonText, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, listData,wpClientId, botId, userId,planId, (error, result) => {
+                        mm.sendInteractiveListMSGNew(messageContent, buttonText, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, listData, wpClientId, botId, userId, planId, (error, result) => {
                             if (error) {
                                 console.log("Failed to send Button message: ", error);
                                 callbackFunction('Failed to send Button message');
@@ -2130,7 +2151,7 @@ const restartMessage = async (restartId, errorMessage, from, phoneNumberId, perm
 }
 
 // if user reply go back (Not in use)
-const backMessage = async (message, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, wpClientId, botId, userId, triggerMsg,planId,  callbackFunction) => {
+const backMessage = async (message, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, wpClientId, botId, userId, triggerMsg, planId, callbackFunction) => {
     try {
         const userChatHistorys = await userChatHistory.findOne({ userMobileNo: userMobileNo, botId: botId, sender: "A" }).sort({ _id: -1 }).limit(1)
         if (userChatHistorys) {
@@ -2167,7 +2188,7 @@ const backMessage = async (message, userMobileNo, phoneNumberId, permanentAccess
                             callbackFunction("Chat script not found")
                         } else {
                             if (scriptData.messageType === "TEXT") {
-                                let messageContent = scriptData.messageDraft
+                                let messageContent = await translateLanguageFunc(scriptData.messageDraft, selectLanguage)
                                 const insertAdminChatHistory = await userChatHistory.create({
                                     botId: botId,
                                     userId: userId,
@@ -2184,7 +2205,7 @@ const backMessage = async (message, userMobileNo, phoneNumberId, permanentAccess
                                 if (!insertAdminChatHistory) {
                                     callbackFunction("Failed to Insert Admin chat history")
                                 } else {
-                                    mm.sendMSG(messageContent, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion,wpClientId, botId, userId,planId, (error, result) => {
+                                    mm.sendMSG(messageContent, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, wpClientId, botId, userId, planId, (error, result) => {
                                         if (error) {
                                             console.log("Error in get method: ", error);
                                             callbackFunction('Failed to send message');
@@ -2200,7 +2221,7 @@ const backMessage = async (message, userMobileNo, phoneNumberId, permanentAccess
                                     });
                                 }
                             } else if (scriptData.messageType === "IMAGE") {
-                                let caption = scriptData.messageDraft,
+                                let caption = await translateLanguageFunc(scriptData.messageDraft, selectLanguage),
                                     mediaUrl = scriptData.mediaUrl
                                 const insertAdminChatHistory = await userChatHistory.create({
                                     botId: botId,
@@ -2219,7 +2240,7 @@ const backMessage = async (message, userMobileNo, phoneNumberId, permanentAccess
                                 if (!insertAdminChatHistory) {
                                     callbackFunction("Failed to Insert Admin chat history")
                                 } else {
-                                    mm.sendMSGWithImage(mediaUrl, caption, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion,wpClientId, botId, userId,planId, (error, result) => {
+                                    mm.sendMSGWithImage(mediaUrl, caption, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, wpClientId, botId, userId, planId, (error, result) => {
                                         if (error) {
                                             console.log("Failed to send image message: ", error);
                                             callbackFunction('Failed to send image message');
@@ -2234,10 +2255,10 @@ const backMessage = async (message, userMobileNo, phoneNumberId, permanentAccess
                                         }
                                     });
                                 }
-    
-    
+
+
                             } else if (scriptData.messageType === "DOCUMENT") {
-                                let caption = scriptData.messageDraft,
+                                let caption = await translateLanguageFunc(scriptData.messageDraft, selectLanguage),
                                     mediaUrl = scriptData.mediaUrl,
                                     filename = Date.now()
                                 const insertAdminChatHistory = await userChatHistory.create({
@@ -2257,7 +2278,7 @@ const backMessage = async (message, userMobileNo, phoneNumberId, permanentAccess
                                 if (!insertAdminChatHistory) {
                                     callbackFunction("Failed to Insert Admin chat history")
                                 } else {
-                                    mm.sendDocumentMedia(caption, mediaUrl, filename, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion,wpClientId, botId, userId,planId, (error, result) => {
+                                    mm.sendDocumentMedia(caption, mediaUrl, filename, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, wpClientId, botId, userId, planId, (error, result) => {
                                         if (error) {
                                             console.log("Failed to send Document message: ", error);
                                             callbackFunction('Failed to send Document message');
@@ -2273,19 +2294,20 @@ const backMessage = async (message, userMobileNo, phoneNumberId, permanentAccess
                                     });
                                 }
                             } else if (scriptData.messageType === "BUTTON") {
-                                let messageContent = scriptData.messageDraft
+                                let messageContent = await translateLanguageFunc(scriptData.messageDraft, selectLanguage)
                                 let manyInsertArray = []
                                 let listData = []
                                 let arrayData = scriptData.buttonOrListData
                                 if (arrayData.length > 0) {
                                     for (let i = 0; i < arrayData.length; i++) {
                                         const element = arrayData[i];
+                                        const trans = await translateLanguageFunc(element.optionName, selectLanguage)
                                         const object = {
                                             botId: botId,
                                             userId: userId,
                                             userMobileNo: userMobileNo,
                                             sender: "A",
-                                            messageContent: element.optionName,
+                                            messageContent: trans,
                                             messageDatetime: new Date(),
                                             mainRedirectId: element.id + "_" + (i + 1),
                                             redirectId: element.id + "_" + (i + 1),
@@ -2296,16 +2318,16 @@ const backMessage = async (message, userMobileNo, phoneNumberId, permanentAccess
                                         manyInsertArray.push(object)
                                         const listObject = {
                                             id: element.id + "_" + (i + 1),
-                                            optionName: element.optionName
+                                            optionName: trans
                                         }
                                         listData.push(listObject)
                                     }
-    
+
                                     const insertAdminChatHistory = await userChatHistory.insertMany(manyInsertArray)
                                     if (!insertAdminChatHistory) {
                                         callbackFunction("Failed to Insert Admin chat history")
                                     } else {
-                                        mm.sendInteractiveButtonMSG(messageContent, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, listData,wpClientId, botId, userId,planId, (error, result) => {
+                                        mm.sendInteractiveButtonMSG(messageContent, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, listData, wpClientId, botId, userId, planId, (error, result) => {
                                             if (error) {
                                                 console.log("Failed to send Button message: ", error);
                                                 callbackFunction('Failed to send Button message');
@@ -2324,20 +2346,21 @@ const backMessage = async (message, userMobileNo, phoneNumberId, permanentAccess
                                     callbackFunction("Not Found buttonOrListData")
                                 }
                             } else if (scriptData.messageType === "LIST") {
-                                let messageContent = scriptData.messageDraft,
-                                    buttonText = scriptData.listButtonName,
+                                let messageContent = await translateLanguageFunc(scriptData.messageDraft, selectLanguage)
+                                buttonText = await translateLanguageFunc(scriptData.listButtonName, selectLanguage),
                                     listData = [],
                                     manyInsertArray = [],
                                     arrayData = scriptData.buttonOrListData
                                 if (arrayData.length > 0) {
                                     for (let i = 0; i < arrayData.length; i++) {
                                         const element = arrayData[i];
+                                        const trans = await translateLanguageFunc(element.optionName, selectLanguage)
                                         const object = {
                                             botId: botId,
                                             userId: userId,
                                             userMobileNo: userMobileNo,
                                             sender: "A",
-                                            messageContent: element.optionName,
+                                            messageContent: trans,
                                             messageDatetime: new Date(),
                                             mainRedirectId: element.id + "_" + (i + 1),
                                             redirectId: element.id + "_" + (i + 1),
@@ -2348,19 +2371,18 @@ const backMessage = async (message, userMobileNo, phoneNumberId, permanentAccess
                                         manyInsertArray.push(object)
                                         const listObject = {
                                             id: element.id + "_" + (i + 1),
-                                            optionName: element.optionName
+                                            optionName: trans
                                         }
                                         listData.push(listObject)
-    
+
                                     }
-    
+
                                     console.log("listData: ", listData);
                                     const insertAdminChatHistory = await userChatHistory.insertMany(manyInsertArray)
                                     if (!insertAdminChatHistory) {
                                         callbackFunction("Failed to Insert Admin chat history")
                                     }
-    
-                                    mm.sendInteractiveListMSGNew(messageContent, buttonText, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, listData,wpClientId, botId, userId,planId, (error, result) => {
+                                    mm.sendInteractiveListMSGNew(messageContent, buttonText, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, listData, wpClientId, botId, userId, planId, (error, result) => {
                                         if (error) {
                                             console.log("Failed to send Button message: ", error);
                                             callbackFunction('Failed to send Button message');
@@ -2387,7 +2409,7 @@ const backMessage = async (message, userMobileNo, phoneNumberId, permanentAccess
                                 } else {
                                     keys.push("")
                                 }
-    
+
                                 const resultInputData = await userInputData.find({ botId: botId, mobileNo: userMobileNo, variableName: { $in: keys } }).select({ selectedValue: 1, variableName: 1, _id: 0 })
                                 Object.keys(bodyParams).forEach((key) => {
                                     for (let i = 0; i < resultInputData.length; i++) {
@@ -2397,7 +2419,7 @@ const backMessage = async (message, userMobileNo, phoneNumberId, permanentAccess
                                         }
                                     }
                                 })
-    
+
                                 const newObject = {
                                     ...bodyParams,
                                     ...limitObject
@@ -2422,7 +2444,7 @@ const backMessage = async (message, userMobileNo, phoneNumberId, permanentAccess
                                             fileUrl = scriptData?.sampleDataKey?.fileUrl;
                                             if (body[dataKey].length > 0) {
                                                 if (scriptData.messageSubType === "TEXT") {
-                                                    let messageContent = scriptData.messageDraft
+                                                    let messageContent = await translateLanguageFunc(scriptData.messageDraft, selectLanguage)
                                                     const keyData = await flattenCartData(body[dataKey], messageContent, dataName, dataId, "", "")
                                                     const insertAdminChatHistory = await userChatHistory.create({
                                                         botId: botId,
@@ -2440,7 +2462,7 @@ const backMessage = async (message, userMobileNo, phoneNumberId, permanentAccess
                                                     if (!insertAdminChatHistory) {
                                                         callbackFunction("Failed to Insert Admin chat history")
                                                     } else {
-                                                        mm.sendMSG(keyData.stringValue, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion,wpClientId, botId, userId,planId, (error, result) => {
+                                                        mm.sendMSG(keyData.stringValue, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, wpClientId, botId, userId, planId, (error, result) => {
                                                             if (error) {
                                                                 console.log("Error in get method: ", error);
                                                                 callbackFunction('Failed to send message');
@@ -2456,13 +2478,13 @@ const backMessage = async (message, userMobileNo, phoneNumberId, permanentAccess
                                                         });
                                                     }
                                                 } else if (scriptData.messageSubType === "LIST") {
-                                                    let messageContent = scriptData.messageDraft,
-                                                        buttonText = scriptData.listButtonName,
+                                                    let messageContent = await translateLanguageFunc(scriptData.messageDraft, selectLanguage),
+                                                        buttonText = await translateLanguageFunc(scriptData.listButtonName, selectLanguage),
                                                         listData = [],
                                                         manyInsertArray = []
                                                     for (let i = 0; i < body[dataKey].length; i++) {
                                                         const element = body[dataKey][i];
-    
+
                                                         const object = {
                                                             botId: botId,
                                                             userId: userId,
@@ -2479,17 +2501,17 @@ const backMessage = async (message, userMobileNo, phoneNumberId, permanentAccess
                                                         manyInsertArray.push(object)
                                                         const listObject = {
                                                             id: scriptData.redirectId + "_" + (i + 1),
-                                                            optionName: element[dataName],
-                                                            desc: element[dataDesc]
+                                                            optionName: await translateLanguageFunc(element[dataName], selectLanguage),
+                                                            desc: await translateLanguageFunc(element[dataDesc], selectLanguage)
                                                         }
                                                         listData.push(listObject)
                                                     }
-    
+
                                                     const insertAdminChatHistory = await userChatHistory.insertMany(manyInsertArray)
                                                     if (!insertAdminChatHistory) {
                                                         callbackFunction("Failed to Insert Admin chat history")
                                                     } else {
-                                                        mm.sendInteractiveListMSGNew(messageContent, buttonText, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, listData,wpClientId, botId, userId,planId, (error, result) => {
+                                                        mm.sendInteractiveListMSGNew(messageContent, buttonText, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, listData, wpClientId, botId, userId, planId, (error, result) => {
                                                             if (error) {
                                                                 console.log("Failed to send Button message: ", error);
                                                                 callbackFunction('Failed to send Button message');
@@ -2505,12 +2527,12 @@ const backMessage = async (message, userMobileNo, phoneNumberId, permanentAccess
                                                         });
                                                     }
                                                 } else if (scriptData.messageSubType === "DOCUMENT") {
-    
+
                                                     const keyData = await flattenCartData(body[dataKey], scriptData.messageDraft, dataName, dataId, fileUrl, "")
-    
-    
+
+
                                                     console.log("keyData", keyData);
-                                                    let caption = keyData.stringValue,
+                                                    let caption = await translateLanguageFunc(keyData.stringValue, selectLanguage),
                                                         mediaUrl = keyData.fileUrlValue,
                                                         filename = Date.now()
                                                     const insertAdminChatHistory = await userChatHistory.create({
@@ -2530,7 +2552,7 @@ const backMessage = async (message, userMobileNo, phoneNumberId, permanentAccess
                                                     if (!insertAdminChatHistory) {
                                                         callbackFunction("Failed to Insert Admin chat history")
                                                     } else {
-                                                        mm.sendDocumentMedia(caption, mediaUrl, filename, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion,wpClientId, botId, userId,planId, (error, result) => {
+                                                        mm.sendDocumentMedia(caption, mediaUrl, filename, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, wpClientId, botId, userId, planId, (error, result) => {
                                                             if (error) {
                                                                 console.log("Failed to send Document message: ", error);
                                                                 callbackFunction('Failed to send Document message');
@@ -2551,7 +2573,7 @@ const backMessage = async (message, userMobileNo, phoneNumberId, permanentAccess
                                             } else {
                                                 callbackFunction("No Data Found")
                                             }
-    
+
                                         } else {
                                             callbackFunction("Failed to send API Data")
                                         }
@@ -2561,8 +2583,9 @@ const backMessage = async (message, userMobileNo, phoneNumberId, permanentAccess
                                 callbackFunction("messageType not matched")
                             }
                         }
-    
+
                     }
+
                     processScript()
                 }
             }
@@ -2703,12 +2726,14 @@ exports.handleMessageSend = async (data) => {
     try {
         if (data.object) {
             console.log("data", data.entry[0].changes[0].value.messages[0]);
+            console.log("START", new Date().getSeconds(), new Date().getMilliseconds());
             if (data.entry && data.entry[0].changes && data.entry[0].changes[0].value.messages && data.entry[0].changes[0].value.messages[0]) {
                 let botPhoneNumber = data.entry[0].changes[0].value.metadata.display_phone_number,
-                    userMobileNo = data.entry[0].changes[0].value.messages[0].from,
-                    type = data.entry[0].changes[0].value.messages[0].type,
-                    userProfileName = data.entry[0].changes[0].value.contacts[0].profile.name,
-                    interactiveType = data?.entry[0]?.changes[0]?.value?.messages[0]?.interactive?.type
+                userMobileNo = data.entry[0].changes[0].value.messages[0].from,
+                type = data.entry[0].changes[0].value.messages[0].type,
+                userProfileName = data.entry[0].changes[0].value.contacts[0].profile.name,
+                interactiveType = data?.entry[0]?.changes[0]?.value?.messages[0]?.interactive?.type
+
                 const checkBotExist = await bot.aggregate([
                     {
                         $match: {
@@ -2766,6 +2791,9 @@ exports.handleMessageSend = async (data) => {
                         wpClientId = checkBotExist[0].clientData.wpClientId,
                         planID = checkBotExist[0].planData._id,
                         userId = ""
+                    let userLang = await getItem(`${botId}:${userMobileNo}`)
+                    console.log("userLang", userLang);
+                    if (userLang) selectLanguage = userLang
                     const findUser = await clientUserContacts.findOneAndUpdate(
                         { wpClientId: wpClientId, mobileNo: userMobileNo },
                         {
@@ -2810,7 +2838,7 @@ exports.handleMessageSend = async (data) => {
                             if (!insertMessageHistory) {
                                 console.log("Failed to insert in Message History");
                             } else {
-                                greetMessage(userMessage, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, wpClientId, botId, userId, planID,(err, result) => {
+                                greetMessage(userMessage, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, wpClientId, botId, userId, planID, (err, result) => {
                                     if (err) {
                                         console.log("Err", err);
                                     } else {
@@ -2893,6 +2921,18 @@ exports.handleMessageSend = async (data) => {
                         } else {
                             let redirectId = data.entry[0].changes[0].value.messages[0].interactive.button_reply.id
                             let selectedOptions = data.entry[0].changes[0].value.messages[0].interactive.button_reply.title
+                            if (selectedOptions.toLowerCase() === 'english') {
+                                selectLanguage = 'en'
+                                await setItem(`${botId}:${userMobileNo}`, 'en')
+                            }
+                            if (selectedOptions.toLowerCase() === 'marathi') {
+                                selectLanguage = 'mr'
+                                await setItem(`${botId}:${userMobileNo}`, 'mr')
+                            }
+                            if (selectedOptions.toLowerCase() === 'hindi') {
+                                selectLanguage = 'hi'
+                                await setItem(`${botId}:${userMobileNo}`, 'hi')
+                            }
                             buttonMessage(redirectId, selectedOptions, userMobileNo, phoneNumberId, permanentAccessToken, apiVersion, wpClientId, botId, userId, planID, (err, result) => {
                                 if (err) {
                                     console.log("Err", err);
@@ -2931,10 +2971,12 @@ exports.handleMessageSend = async (data) => {
                             })
                         }
                     } else {
-                        // res.sendStatus(200);
+                        res.sendStatus(200);
                     }
                 }
             }
+
+            console.log("END", new Date().getSeconds(), new Date().getMilliseconds());
         }
     } catch (error) {
         console.log("Something Went in Message Handle Function", error);

@@ -3,15 +3,15 @@ import { FaArrowCircleDown, FaArrowDown, FaCheck, FaChevronDown, FaClosedCaption
 import { FaFolderClosed } from 'react-icons/fa6';
 import { MdCancel } from 'react-icons/md';
 import { toast } from 'react-toastify';
-import { createAPI, updateAPI } from '../constants/constants';
-import { useSelector } from 'react-redux';
+import { createAPI, getAPI, updateAPI } from '../constants/constants';
+import { useDispatch, useSelector } from 'react-redux';
+import { setUserCrendentials } from '../store/clientSlice';
 
-const ClientCreadentialForm = ({ drawerCondition, btnName, data, wpClientId }) => {
+const ClientCreadentialForm = ({ drawerCondition, btnName, data, wpClientId, fetchData = () => { } }) => {
 
   function isEmptyObject(obj) {
     return Object.entries(obj).length === 0;
   }
-
 
   const [createOrUpdate, setCreateOrUpdate] = useState(isEmptyObject(data));
 
@@ -70,6 +70,12 @@ const ClientCreadentialForm = ({ drawerCondition, btnName, data, wpClientId }) =
           ...objectData
         })
         if (res.status) {
+          // const resConfig = await getAPI("/client/getClientConfigInfo", { id: wpClientId })
+          // if (resConfig.status) {
+          //   const config = resConfig.data[0].clinetConfig.length > 0 ? resConfig.data[0].clinetConfig[0] : {}
+          //   dispatch(setUserCrendentials(config))
+          // }
+          fetchData()
           toast.success(res.message)
           setWpMobileNo('');
           setWphoneNoId('');
@@ -77,13 +83,11 @@ const ClientCreadentialForm = ({ drawerCondition, btnName, data, wpClientId }) =
           setWpToken('');
           setWpApiVersion('');
           setWpAppId('');
-
           setLoadingSpin(false);
           drawerCondition.setIsDrawerCredentialOpen(false);
         } else {
           toast.error(res.message)
           setLoadingSpin(false);
-
         }
       } else {
         objectData = {
@@ -102,6 +106,12 @@ const ClientCreadentialForm = ({ drawerCondition, btnName, data, wpClientId }) =
           ...objectData
         })
         if (res.status) {
+          // const resConfig = await getAPI("/client/getClientConfigInfo", { id: wpClientId })
+          // if (resConfig.status) {
+          //   const config = resConfig.data[0].clinetConfig.length > 0 ? resConfig.data[0].clinetConfig[0] : {}
+          //   dispatch(setUserCrendentials(config))
+          // }
+          fetchData()
           toast.success(res.message)
           setWpMobileNo('');
           setWphoneNoId('');
@@ -144,6 +154,10 @@ const ClientCreadentialForm = ({ drawerCondition, btnName, data, wpClientId }) =
     {
       "id": 4,
       "name": "v19.0"
+    },
+    {
+      "id": 5,
+      "name": "v20.0"
     }
   ]
 

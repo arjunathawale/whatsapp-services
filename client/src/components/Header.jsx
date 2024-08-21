@@ -17,7 +17,7 @@ const Header = ({ name }) => {
             <h1 className='text-black text-xl'>{name}</h1>
 
             <div className='flex justify-center items-center'>
-                <p className='text-black text-sm text-center mt-1'>Your {activePlanData?.planName} Plan Expire On <span className='font-medium text-red-500'>{moment(activePlanData?.expireDatetime).format("DD-MMM-YYYY hh:mm:ss A")}</span></p>
+                <p className='text-black text-sm text-center mt-1'>{activePlanData?.planName && `Your ${activePlanData?.planName} Plan Expire On `} {activePlanData?.expireDatetime && <span className='font-medium text-red-500'>{moment(activePlanData?.expireDatetime).format("DD-MMM-YYYY hh:mm:ss A")}</span>}</p>
                 {
                     role === "CLIENT" && <>
                         <AiOutlineUser onClick={() => {
@@ -40,10 +40,6 @@ const Header = ({ name }) => {
                     navigate('/login')
                 }} className='w-9 h-7 text-red-500 hover:scale-110 cursor-pointer duration-300' />
             </div>
-
-
-
-
             {
                 isDrawerOpen && <UpdatePasswordForm drawerCondition={{ isDrawerOpen, setIsDrawerOpen }} btnName="Update Details" data={userData} />
             }

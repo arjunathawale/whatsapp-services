@@ -3,7 +3,7 @@ import { loginAPI } from '../constants/constants'
 import { toast } from 'react-toastify'
 import { useNavigate } from 'react-router-dom'
 import { setLogin, setUserData, setRole, setUserCrendentials, setAuthToken, setPlanData } from '../store/clientSlice'
-import { useDispatch } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import { FaEye, FaEyeSlash } from 'react-icons/fa6'
 
 const Login = () => {
@@ -12,6 +12,13 @@ const Login = () => {
     const [password, setPassword] = useState("")
     const [showPassword, setShowPassword] = useState(false)
     const dispatch = useDispatch()
+    const { isLoggedIn } = useSelector(state => state.user)
+
+    useEffect(() => {
+        if (isLoggedIn) {
+            navigate("/")
+        }
+    }, [isLoggedIn])
 
     const handleLogin = async (e) => {
         e.preventDefault()
@@ -24,13 +31,14 @@ const Login = () => {
             })
             if (res.status) {
                 toast.success(res.message)
-                dispatch(setLogin(true))
                 dispatch(setUserData(res?.data))
                 dispatch(setRole(res?.data?.role))
                 dispatch(setAuthToken(res?.AuthToken))
-                dispatch(setUserCrendentials(res?.data?.clinetConfig ? res?.data?.clinetConfig[0] : {}))
-                dispatch(setPlanData(res.planData ? res.planData : {}))
-                navigate("/")
+                dispatch(setUserCrendentials(res?.data?.clinetConfig?.length > 0 ? res?.data?.clinetConfig[0] : {}))
+                dispatch(setPlanData(res?.planData ? res?.planData : {}))
+                dispatch(setLogin(true))
+
+                // navigate("/")
             } else {
                 toast.error(res.message)
             }
@@ -82,7 +90,7 @@ const Login = () => {
                                     </a>
                                 </div>
                             </div>
-                            <div className="mt-2">
+                            <div className="mt-2 relative">
                                 <input
                                     id="password"
                                     name="password"
@@ -91,13 +99,13 @@ const Login = () => {
                                     required
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    className="block w-full  rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 outline-none px-4 sm:text-sm sm:leading-6"
+                                    className="block  w-full  rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 outline-none px-4 sm:text-sm sm:leading-6"
                                 />
                                 {
-                                    showPassword ? <FaEyeSlash className='absolute cursor-pointer right-[36%] top-[62.4%]' onClick={() => setShowPassword(!showPassword)}/> : <FaEye className='absolute cursor-pointer right-[36%] top-[62.4%]' onClick={() => setShowPassword(!showPassword)}/>
+                                    showPassword ? <FaEyeSlash className='absolute cursor-pointer right-[3%] top-[30%]' onClick={() => setShowPassword(!showPassword)} /> : <FaEye className='absolute cursor-pointer right-[3%] top-[30%]' onClick={() => setShowPassword(!showPassword)} />
                                 }
 
-                                
+
                             </div>
                         </div>
 
@@ -113,9 +121,9 @@ const Login = () => {
                     </form>
 
                     <p className="mt-10 text-center text-sm text-gray-500">
-                        Not a member?{' '}
-                        <a href="#" className="font-semibold leading-6 text-blue-500 hover:text-blue-600">
-                            Start a 14 day free trial
+                        Don't have an account?{' '}
+                        <a className="font-semibold cursor-pointer leading-6 text-blue-500 hover:text-blue-600" onClick={() => navigate("/register")}>
+                            Register
                         </a>
                     </p>
                 </div>

@@ -11,7 +11,7 @@ import { MdContentCopy } from "react-icons/md";
 import ReactQuill from 'react-quill'; // Import ReactQuill component
 import 'react-quill/dist/quill.snow.css';
 import { toast } from 'react-toastify';
-import { createAPI, fileUploadAPI } from '../constants/constants';
+import { createAPI, FILE_BASE_URL, fileUploadAPI } from '../constants/constants';
 import bgUrlImage from '../assets/wpBg.jpeg'
 import { useSelector } from 'react-redux';
 const TemplateForm = ({ drawerCondition, btnName, data }) => {
@@ -40,6 +40,8 @@ const TemplateForm = ({ drawerCondition, btnName, data }) => {
   const [createOrUpdate, setCreateOrUpdate] = useState(isEmptyObject(data));
   const [loadingSpin, setLoadingSpin] = useState(false);
   const [allRequirdFilled, setAllRequirdFilled] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0)
+  const [showProgress, setShowProgress] = useState(false)
 
   // first row
   const [tempName, setTempName] = useState(data.mbl ? data?.mbl : '');
@@ -156,23 +158,15 @@ const TemplateForm = ({ drawerCondition, btnName, data }) => {
   const [footerText, setFooterText] = useState('');
 
   function cleanHtml(html) {
-    // Replace <strong> and </strong> with *
     html = html.replace(/<\/?strong>/g, '*');
-    // Replace <em> and </em> with _
     html = html.replace(/<\/?em>/g, '_');
-    // Replace <s> and </s> with ~
     html = html.replace(/<\/?s>/g, '~');
-    // html = html.replace(/<br\s*\/?>/gi, '\n');
 
     html = html.replaceAll("</p><p>", '\n');
     html = html.replaceAll("<p>", '');
     html = html.replaceAll("</p>", '');
     html = html.replace(/<\/?em>/g, '_');
-    // Remove all other HTML tags
     html = html.replace(/<[^>]+>/g, '');
-    // Remove <br> tags
-
-
     return html;
   }
   // Button States
@@ -375,7 +369,6 @@ const TemplateForm = ({ drawerCondition, btnName, data }) => {
 
   let bodyJson = null
   let exampleBody = {}
-  console.log("bodyText", bodyText);
   if (bodyText) {
     if (bodyValues.length > 0) {
       exampleBody = {
@@ -401,8 +394,6 @@ const TemplateForm = ({ drawerCondition, btnName, data }) => {
 
   }
 
-
-  // console.log("cleanHtml(bodyText)", cleanHtml(bodyText));
 
   let footerJson = null
   if (footerText) {
@@ -495,7 +486,7 @@ const TemplateForm = ({ drawerCondition, btnName, data }) => {
 
 
   // const [selectedFile, setSelectedFile] = useState(null);
-  const [tempMediaUrl, setTempMediaUrl] = useState("http://dramabookings.uvtechsoft.com:7896/static/currentSeatStatus/CharChoughi_SHOW_ID_1.png");
+  const [tempMediaUrl, setTempMediaUrl] = useState(bgUrlImage);
 
 
   const handleFileChange = async (event) => {
@@ -503,13 +494,21 @@ const TemplateForm = ({ drawerCondition, btnName, data }) => {
       "file": event.target.files[0],
       "wpClientId": _id
     }
-    const mimetypeData = header === "IMAGE" ? ["image/jpeg", "image/png"] : header === "VIDEO" ? ["video/mp4"] : header === "DOCUEMENT" ? ["application/pdf"] : []
+    
+    
+    const mimetypeData = header === "IMAGE" ? ["image/jpeg", "image/png"] : header === "VIDEO" ? ["video/mp4"] : header === "DOCUMENT" ? ["application/pdf"] : []
+    console.log("fileData", mimetypeData);
     if (mimetypeData.includes(event.target.files[0].type)) {
-      const data = await fileUploadAPI('/upload/templateMedia', fileData)
+      setShowProgress(true);
+      const data = await fileUploadAPI('/upload/templateMedia', fileData, setUploadProgress)
+      console.log("data", data);
+      
       if (data.status) {
-        setTempMediaUrl(`http://localhost:8989/static/templateMedia/${data.fileName}`);
+        setTempMediaUrl(`${FILE_BASE_URL}/templateMedia/${data.fileName}`);
         setMediaId(data.data[0].mediaId);
+        setShowProgress(false);
         toast.success("File Uploaded Successfully")
+
       } else {
         toast.error("File Upload Failed")
       }
@@ -550,7 +549,7 @@ const TemplateForm = ({ drawerCondition, btnName, data }) => {
         await drawerCondition.setIsDrawerTemplateOpen(false);
 
       } else {
-        setLoadingSpin(true);
+        setLoadingSpin(false);
         toast.error(res.message)
       }
     }
@@ -572,7 +571,6 @@ const TemplateForm = ({ drawerCondition, btnName, data }) => {
               <div className='w-1/3 inline-block'>
                 <label htmlFor="input-label" className="block text-sm mb-1 font-medium"><span className='text-sm text-red-500 font-medium'>*</span>Template Name</label>
                 <input type="text" value={tempName} id="input-label" autoComplete='off' onChange={(e) => setTempName(e.target.value.replaceAll(" ", "_"))} className={`py-2 px-4 w-full block rounded-lg text-sm border mb-1 outline-none ${allRequirdFilled && tempName.length == 0 ? "border-red-500" : "border-gray-400"} `} placeholder="Enter Template Name" />
-
                 {
                   (allRequirdFilled && tempName.length === 0) ? <label for="input-label" className="block text-xs mb-1 ml-1 text-red-500">Template Name is Required</label> : <p className='text-[9px] font-semibold text-red-600 ml-1'>{tempName.length}/512</p>
                 }
@@ -719,13 +717,14 @@ const TemplateForm = ({ drawerCondition, btnName, data }) => {
                     aria-labelledby="options-menu"
                   >
                     <div className="py-1 duration-200" role="none">
-
                       {
                         headerData.map(item => (
                           <h6
                             key={item.id}
                             className="block  px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
                             onClick={() => {
+                              setHeaderText("")
+                              setMediaId("")
                               setHeader(item.name)
                               setIsOpenHeader(false)
                             }}
@@ -752,7 +751,19 @@ const TemplateForm = ({ drawerCondition, btnName, data }) => {
                   <label htmlFor="input-label" className="block text-sm mb-1 font-medium">Media file</label>
                   <label htmlFor="file-input" class="sr-only">Choose file</label>
                   <input type="file" onChange={handleFileChange} autoComplete='off' name="file-input" id="file-input" class="block w-full border border-gray-400 shadow-sm rounded-lg text-sm focus:z-10 cursor-pointer  file:bg-gray-50 file:border-0 file:me-4 file:py-2"></input>
-
+                  {uploadProgress > 0 && showProgress && (
+                    <div className="mt-0">
+                      <div className="pt-1">
+                          <p className='text-blue-500 text-xs'>{uploadProgress}%</p>
+                        <div className="flex h-1 mb-0 overflow-hidden text-xs bg-gray-200 rounded">
+                          <div
+                            style={{ width: `${uploadProgress}%` }}
+                            className={`flex flex-col text-center text-white justify-center bg-blue-500 transition-all duration-500`}
+                          ></div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                   {
                     (allRequirdFilled && mediaId.length === 0) && <p className='text-red-500 text-xs'>{header === "IMAGE" ? "Select jpeg or png image" : header === "VIDEO" ? "Select mp4 video file" : header === "DOCUMENT" ? "Select pdf files" : ''}</p>
                   }
@@ -1011,7 +1022,7 @@ const TemplateForm = ({ drawerCondition, btnName, data }) => {
                 <div className='w-1/3 inline-block'>
                   <label htmlFor="input-label" className="block text-sm mb-1 font-medium"><span className='text-sm text-red-500 font-medium'>*</span>Button Name</label>
                   <input type="text" autoComplete='off' value={buttonName} id="input-label" onChange={(e) => setButtonName(e.target.value)} className={`py-2 px-4 w-full block rounded-lg text-sm border mb-1 outline-none ${allRequirdFilled && buttonName.length == 0 ? "border-red-500" : "border-gray-400"} `} placeholder="Enter Button Name" />
-                  <p className='text-[9px] font-semibold text-red-600 ml-1'>{buttonName.length}/2 5</p>
+                  <p className='text-[9px] font-semibold text-red-600 ml-1'>{buttonName.length}/25</p>
                 </div>
               </div>
             }
@@ -1093,7 +1104,7 @@ const TemplateForm = ({ drawerCondition, btnName, data }) => {
             }
             {
               header === "VIDEO" && <video
-                src="https://watools.uvtechsoft.com:9888/static/clientMediafiles//closeup_of_insect_and_flower_in_wild_nature_6892017.mp4"
+                src={tempMediaUrl || `${FILE_BASE_URL}/templateMedia/20240516210346404.mp4`}
                 controls
                 className="w-full h-[150px] object-center rounded-lg mt-2"
                 autoPlay={true}

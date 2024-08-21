@@ -3,9 +3,9 @@ import { createSlice } from "@reduxjs/toolkit";
 const isLoggedIn = JSON.parse(localStorage.getItem("isLoggedIn")) || false
 const userData = JSON.parse(localStorage.getItem("userData")) || {}
 const role = localStorage.getItem("role") || ""
-const authToken = localStorage.getItem("authToken") || ""
-const userCrendentials = JSON.parse(localStorage.getItem("userCrendentials")) || {}
-const activePlanData = JSON.parse(localStorage.getItem("activePlanData")) || {}
+export const authToken = localStorage.getItem("authToken") || ""
+const userCrendentials = JSON.parse(localStorage.getItem("userCrendentials") || '{}')
+const activePlanData = JSON.parse(localStorage.getItem("activePlanData") || '{}')
 
 
 const initialState = {

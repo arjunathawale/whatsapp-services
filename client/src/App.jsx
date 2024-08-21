@@ -16,6 +16,8 @@ import MessageHistory from './pages/MessageHistory'
 import Profile from './pages/Profile'
 import PurchasePlan from './pages/PurchasePlan'
 import ManageFiles from './pages/ManageFiles'
+import Register from './pages/Register'
+import Flow from './pages/Flow'
 
 
 function App() {
@@ -66,11 +68,11 @@ function App() {
               <ManageFiles />
             </ProtectedRoute>
           } />
-          {/* <Route path='/chatbot-automation' element={
+          <Route path='/chatbot-automation' element={
             <ProtectedRoute isLoggedIn={isLoggedIn} roles={["CLIENT"]}>
-              <BulkSender />
+              <Flow />
             </ProtectedRoute>
-          } /> */}
+          } />
           <Route path='/bulk-sender-details' element={
             <ProtectedRoute isLoggedIn={isLoggedIn} roles={["CLIENT"]}>
               <BulkSenderDetails />
@@ -87,6 +89,7 @@ function App() {
             </ProtectedRoute>
           } />
           <Route path='/login' element={<Login />} />
+          <Route path='/register' element={<Register />} />
           <Route path='*' element={<div className='p-5 justify-center h-full w-full'>Page Not Found</div>} />
         </Routes>
       </div>

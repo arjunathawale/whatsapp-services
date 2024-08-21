@@ -6,6 +6,7 @@ import PricingPlanForm from '../Forms/PricingPlanForm'
 import { getAPI } from '../constants/constants'
 import { toast } from 'react-toastify'
 import { MdCheck, MdClose, MdEdit } from 'react-icons/md'
+import LoadingSpinner from '../components/LoadingSpinner'
 
 const PricingPlan = () => {
     const [filter, setFilter] = useState(false)
@@ -146,15 +147,7 @@ const PricingPlan = () => {
                                     ))
                                 }
                             </div>
-                        </> : isLoading ? <div className="min-h-60 flex flex-col rounded-xl">
-                            <div className="flex flex-auto flex-col justify-center items-center p-4 md:p-5">
-                                <div className="flex justify-center">
-                                    <div className="animate-spin inline-block size-6 border-[3px] border-current border-t-transparent text-blue-600 rounded-full dark:text-blue-500" role="status" aria-label="loading">
-                                        <span className="sr-only">Loading...</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div> :
+                        </> : isLoading ? <LoadingSpinner /> :
                             <h3 className='text-2xl text-center font-medium mt-1'>No Data Found</h3>
 
                 }

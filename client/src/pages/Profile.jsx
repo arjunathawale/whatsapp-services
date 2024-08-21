@@ -1,24 +1,25 @@
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import Header from '../components/Header'
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { getAPI } from '../constants/constants';
 import { toast } from 'react-toastify';
 import ClientForm from '../Forms/ClientForm';
 import ClientCreadentialForm from '../Forms/ClientCreadentialForm';
+import { setUserCrendentials as newSet } from '../store/clientSlice';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 const Profile = () => {
   const { _id } = useSelector(state => state.user.userData)
   const [userData, setUserData] = useState({})
   const [userCrendentials, setUserCrendentials] = useState({})
   const [loading, setLoading] = useState(false)
-
+  const dispatch = useDispatch()
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
   const [isDrawerCredentialOpen, setIsDrawerCredentialOpen] = useState(false)
 
   useEffect(() => {
     fetchData()
   }, [])
-
 
 
 
@@ -29,7 +30,8 @@ const Profile = () => {
     })
     if (res.status) {
       setUserData(res.data[0])
-      setUserCrendentials(res.data[0].clinetConfig[0])
+      setUserCrendentials(res?.data[0]?.clinetConfig?.length > 0 ? res?.data[0]?.clinetConfig[0] : {})
+      dispatch(newSet(res?.data[0]?.clinetConfig?.length > 0 ? res?.data[0]?.clinetConfig[0] : {}))
       setLoading(false)
     } else {
       toast.error("Something went wrong")
@@ -40,16 +42,7 @@ const Profile = () => {
     <div className='p-1'>
       <Header name="Profile" />
       {
-        loading ?
-          <div className="min-h-60 flex flex-col rounded-xl">
-            <div className="flex flex-auto flex-col justify-center items-center p-4 md:p-5">
-              <div className="flex justify-center">
-                <div className="animate-spin inline-block size-6 border-[3px] border-current border-t-transparent text-blue-600 rounded-full dark:text-blue-500" role="status" aria-label="loading">
-                  <span className="sr-only">Loading...</span>
-                </div>
-              </div>
-            </div>
-          </div> :
+        loading ? <LoadingSpinner /> :
           <div>
             <div className='w-full h-42 bg-gray-100 rounded-sm mt-2 p-2'>
               <div className='w-full flex justify-between p-2'>
@@ -93,7 +86,12 @@ const Profile = () => {
                   <div className='flex justify-between'>
                     <p className='text-black text-sm font-light w-[40%]'>Client Status</p>
                     <span className='text-l text-l font-light w-[10%]'>:</span>
-                    <p className='text-black text-sm font-medium w-[50%]'>{userData?.isActive ? <span className='bg-green-500 p-1 rounded-md px-2'>Active</span> : <span className='bg-red-500 p-1 rounded-md px-2'>InActive</span>}</p>
+                    <p className='text-black text-sm font-light w-[50%]'>{userData?.isActive ? <span className='bg-green-500 p-1 rounded-md px-2'>Active</span> : <span className='bg-red-500 p-1 rounded-md px-2'>InActive</span>}</p>
+                  </div>
+                  <div className='flex justify-between mt-2'>
+                    <p className='text-black text-sm font-light w-[40%]'>Profile Status</p>
+                    <span className='text-sm text-l font-light w-[10%]'>:</span>
+                    <p className='text-black text-sm font-light w-[50%]'>{Object.keys(userCrendentials).length === 0 ? <span className='bg-yellow-400 p-1 rounded-md px-2'>In Complete</span> : <span className='bg-green-500 p-1 rounded-md px-2'>Complete</span>}</p>
                   </div>
                 </div>
               </div>
@@ -164,11 +162,11 @@ const Profile = () => {
 
 
       {
-        isDrawerOpen && <ClientForm drawerCondition={{ isDrawerOpen, setIsDrawerOpen }} btnName="Update Details" data={userData} />
+        isDrawerOpen && <ClientForm drawerCondition={{ isDrawerOpen, setIsDrawerOpen }} btnName="Update Details" data={userData} fetchData={fetchData} />
       }
 
       {
-        isDrawerCredentialOpen && <ClientCreadentialForm drawerCondition={{ isDrawerCredentialOpen, setIsDrawerCredentialOpen }} btnName="Update Credential" data={userCrendentials} wpClientId={_id} />
+        isDrawerCredentialOpen && <ClientCreadentialForm drawerCondition={{ isDrawerCredentialOpen, setIsDrawerCredentialOpen }} btnName="Update Credential" data={userCrendentials} wpClientId={_id} fetchData={fetchData} />
       }
 
     </div>

@@ -4,24 +4,16 @@ import { IoMdCall } from 'react-icons/io';
 import { MdContentCopy } from 'react-icons/md';
 import { PiArrowBendUpLeft } from 'react-icons/pi';
 
-const ShowTemplateModel = ({ isOpen, onClose, data}) => {
+const ShowTemplateModel = ({ isOpen, onClose, data }) => {
     if (!isOpen) return null;
-    
-function transformString(inputString) {
-    // Replace *...* with <strong>...</strong>
-    inputString = inputString.replace(/\*(.*?)\*/g, '<strong>$1</strong>');
 
-    // Replace _..._ with <em>...</em>
-    inputString = inputString.replace(/_(.*?)_/g, '<em>$1</em>');
-
-    // Replace ~...~ with <s>...</s>
-    inputString = inputString.replace(/~(.*?)~/g, '<s>$1</s>');
-
-    // Replace \n with <br>
-    inputString = inputString.replace(/\n/g, '<br>');
-
-    return inputString;
-}
+    function transformString(inputString) {
+        inputString = inputString.replace(/\*(.*?)\*/g, '<strong>$1</strong>');
+        inputString = inputString.replace(/_(.*?)_/g, '<em>$1</em>');
+        inputString = inputString.replace(/~(.*?)~/g, '<s>$1</s>');
+        inputString = inputString.replace(/\n/g, '<br>');
+        return inputString;
+    }
     console.log("data22", data);
     return (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
@@ -29,24 +21,25 @@ function transformString(inputString) {
                 <h4 className='text-lg font-medium'>Template Preview</h4>
                 <hr />
                 {
-                    data?.headerType != "TEXT" &&    <div className='w-full h-28'>
-                    {
-                        data?.headerType === "IMAGE" && <img src={"http://dramabookings.uvtechsoft.com:7896/static/currentSeatStatus/CharChoughi_SHOW_ID_1.png"} alt="Header" className="w-full h-full object-center rounded-lg mt-2" />
-                    }
-                    {
-                        data?.headerType === "VIDEO" && <video
-                            src={data.headerValues.example.header_handle[0]}
-                            // controls
-                            className="w-full h-full object-center rounded-lg mt-2"
-                            autoPlay={true}
-                        />
-                    }
-                </div>
+                    data?.headerType != "TEXT" && data?.headerType !='' &&
+                    <div className='w-full h-28'>
+                        {
+                            data?.headerType === "IMAGE" && <img src={data.headerValues.example.header_handle[0]} alt="Header" className="w-full h-full object-cover rounded-lg mt-2" />
+                        }
+                        {
+                            data?.headerType === "VIDEO" && <video
+                                src={data.headerValues.example.header_handle[0]}
+                                // controls
+                                className="w-full h-full object-center rounded-lg mt-2"
+                                autoPlay={true}
+                            />
+                        }
+                    </div>
                 }
-             
+
                 <article class="text-wrap ... bg-white p-2 rounded-lg">
                     <p className='text-xs font-semibold'>{data?.headerValues?.text}</p>
-                    <p className='text-xs' dangerouslySetInnerHTML={{ __html: transformString(data?.bodyValues?.text)}}></p>
+                    <p className='text-xs' dangerouslySetInnerHTML={{ __html: transformString(data?.bodyValues?.text) }}></p>
                     <p className='text-xs text-gray-400 '>{data?.footerValues?.text}</p>
                     <p className='text-[10px] mt-2 text-end '>9.00 PM</p>
                     <hr />

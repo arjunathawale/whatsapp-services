@@ -11,17 +11,17 @@ const Pagination = ({ currentPage, pageSize, totalPages, onPageChange, setPageSi
     return (
         <nav className="flex justify-between items-center mt-2">
             <div className="flex items-center">
-                <span className="mr-2">{currentPage} out of {totalPages}</span>
+                <span className="mr-2">{totalPages === 0 ? 0 : currentPage} out of {totalPages}</span>
                 <button
                     onClick={() => onPageChange(currentPage - 1)}
-                    disabled={currentPage === 1}
+                    disabled={currentPage === 1 || totalPages === 0}
                     className="px-3 py-1 rounded mr-2"
                 >
                     <FaChevronLeft />
                 </button>
                 <button
                     onClick={() => onPageChange(currentPage + 1)}
-                    disabled={currentPage === totalPages}
+                    disabled={currentPage === totalPages || totalPages === 0}
                     className="px-3 py-1 rounded"
                 >
                     <FaChevronRight />

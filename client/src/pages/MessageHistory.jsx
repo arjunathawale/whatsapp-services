@@ -7,6 +7,7 @@ import { getAPI } from '../constants/constants'
 import { toast } from 'react-toastify'
 import moment from 'moment'
 import DatepickerComponent from '../components/DatepickerComponent'
+import LoadingSpinner from '../components/LoadingSpinner'
 
 const MessageHistory = () => {
 
@@ -44,10 +45,8 @@ const MessageHistory = () => {
             ...filterObject,
             fromDate: moment(selectedFromDate, 'ddd MMM DD YYYY HH:mm:ss [GMT]ZZ').startOf('day').utc().format(),
             toDate: moment(selectedToDate, 'ddd MMM DD YYYY HH:mm:ss [GMT]ZZ').endOf('day').utc().format(),
-
         })
         if (res.status) {
-            console.log("res.data", res.data);
             setDataCount(res.count)
             setData(res.data)
             setIsLoading(false)
@@ -106,7 +105,10 @@ const MessageHistory = () => {
                             <label className='text-black text-xs'>To Date</label>
                             <DatepickerComponent selectedDate={selectedToDate} handleDateChange={handleToDateChange} />
                         </div>
-                        <button className='text-white self-end text-sm h-[30px] py-1 hover:bg-blue-400 w-24 rounded-sm bg-blue-500' onClick={() => setFilterApply(prev => !prev)}>Apply</button>
+                        <button className='text-white self-end text-sm h-[30px] py-1 hover:bg-blue-400 w-24 rounded-sm bg-blue-500' onClick={() => {
+                            setFilterApply(prev => !prev)
+                            setFilter(false)
+                        }}>Apply</button>
                     </div>
                 }
             </div>
@@ -129,10 +131,10 @@ const MessageHistory = () => {
                                             </tr>
                                         </thead>
 
-                                        <tbody className="divide divide-gray-200">
 
+                                        <tbody className="divide divide-gray-200">
                                             {
-                                                data.length > 0 ? data.map((item, index) => {
+                                                data.length > 0 && data.map((item, index) => {
                                                     return (
                                                         <tr className="border border-gray-200" key={index}>
                                                             <td className="px-4 whitespace-nowrap text-xs text-gray-800 font-medium py-2 border border-gray-200">{item?.sender}</td>
@@ -144,11 +146,13 @@ const MessageHistory = () => {
                                                             <td className="px-4 whitespace-nowrap text-center text-xs text-gray-800 font-medium py-2 border border-gray-200"><span className={`${item?.messageStatus === "failed" ? "bg-red-500" : item?.messageStatus === "sent" || item?.messageStatus === "received" ? "bg-green-500" : item?.messageStatus === "delivered" ? "bg-gray-400" : item?.messageStatus === "read" ? "bg-blue-400" : item?.messageStatus === "pending" ? "bg-yellow-300" : ""} rounded-md text-xs uppercase text-gray-800 font-medium mr-2 px-2.5 py-0.5 rounde`}>{item?.messageStatus}</span></td>
                                                         </tr>
                                                     )
-                                                }) : <h4 className="text-center">No Data</h4>
+                                                })
                                             }
                                         </tbody>
-
                                     </table>
+                                    {isLoading ? <LoadingSpinner/> : data.length === 0 && <h4 className="text-center text-lg mt-5">No Data Found.</h4>
+                                }
+                                    
                                 </div>
                             </div>
                         </div>

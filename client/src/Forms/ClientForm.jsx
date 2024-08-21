@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { FaWindowClose } from "react-icons/fa";
 import { createAPI, getAPI, updateAPI } from '../constants/constants';
 import { toast } from "react-toastify"
-const ClientForm = ({ drawerCondition, btnName, data }) => {
+const ClientForm = ({ drawerCondition, btnName, data, fetchData = () => {} }) => {
   function isEmptyObject(obj) {
     return Object.entries(obj).length === 0;
   }
@@ -38,7 +38,7 @@ const ClientForm = ({ drawerCondition, btnName, data }) => {
   const handleSubmit = async (event) => {
     event.preventDefault();
     setAllRequirdFilled(true);
-    if (!name || !panNo || !gstNo || !address || !email || !mobileNo) {
+    if (!name || !address || !email || !mobileNo) {
       toast.info("All Fields are required!")
     } else {
       setLoadingSpin(true);
@@ -59,6 +59,7 @@ const ClientForm = ({ drawerCondition, btnName, data }) => {
         })
         if (res.status) {
           toast.success(res.message)
+          fetchData();
           drawerCondition.setIsDrawerOpen(false);
           setName('');
           setPanNo('');
@@ -90,6 +91,7 @@ const ClientForm = ({ drawerCondition, btnName, data }) => {
         })
         if (res.status) {
           toast.success(res.message)
+          fetchData();
           setName('');
           setPanNo('');
           setGstNo('');
@@ -147,15 +149,15 @@ const ClientForm = ({ drawerCondition, btnName, data }) => {
 
         <label for="input-label" className="block text-xs  mb-1">Pan Number</label>
         <input type="text" id="input-label" value={panNo} maxLength={10} onChange={(e) => setPanNo(e.target.value)} className="py-2 px-4 block w-full uppercase rounded-lg text-sm border border-gray-400 mb-1  outline-none" placeholder="CREPA0189L" />
-        {
+        {/* {
           (allRequirdFilled && panNo.length === 0) && <label for="input-label" className="block text-xs mb-1 ml-1 text-red-500">PAN No. is Required</label>
-        }
+        } */}
 
         <label for="input-label" className="block text-xs  mb-1">GST No.</label>
-        <input type="text" id="input-label" value={gstNo} maxLength={16} onChange={(e) => setGstNo(e.target.value)} className="py-2 px-4 block w-full uppercase rounded-lg text-sm border border-gray-400 mb-1  outline-none" placeholder="CREPA0189L" />
-        {
+        <input type="text" id="input-label" value={gstNo} maxLength={16} onChange={(e) => setGstNo(e.target.value)} className="py-2 px-4 block w-full uppercase rounded-lg text-sm border border-gray-400 mb-1  outline-none" placeholder="27AAAAP0267H2ZN" />
+        {/* {
           (allRequirdFilled && gstNo.length === 0) && <label for="input-label" className="block text-xs mb-1 ml-1 text-red-500">GST No. is Required</label>
-        }
+        } */}
 
         <label for="input-label" className="block text-xs  mb-1">Address</label>
         <input type="text" id="input-label" value={address} onChange={(e) => setAddress(e.target.value)} className="py-2 px-4 block w-full  rounded-lg text-sm border border-gray-400 mb-1  outline-none" placeholder="Block Road Sangli" />
